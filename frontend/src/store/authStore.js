@@ -1,0 +1,63 @@
+import { create } from 'zustand';
+import { registerUser, loginUser, logoutUser, getCurrentUser } from '../services/authService';
+
+const useAuthStore = create((set) => ({
+  user: null,
+  isLoading: false,
+  error: null,
+  isAuthenticated: false,
+
+  // Register
+  register: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await registerUser(data);
+      set({ user: res.data, isAuthenticated: true, isLoading: false });
+      return { success: true };
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      return { success: false, message: err.message };
+    }
+  },
+
+  // Login
+  login: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await loginUser(data);
+      set({ user: res.data, isAuthenticated: true, isLoading: false });
+      return { success: true };
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      return { success: false, message: err.message };
+    }
+  },
+
+  // Logout
+  logout: async () => {
+    set({ isLoading: true });
+    try {
+      await logoutUser();
+      set({ user: null, isAuthenticated: false, isLoading: false });
+      return { success: true };
+    } catch (err) {
+      set({ isLoading: false });
+      return { success: false };
+    }
+  },
+
+  // Get current logged in user — call on app load
+  fetchUser: async () => {
+    set({ isLoading: true });
+    try {
+      const res = await getCurrentUser();
+      set({ user: res.data, isAuthenticated: true, isLoading: false });
+    } catch (err) {
+      set({ user: null, isAuthenticated: false, isLoading: false });
+    }
+  },
+
+  clearError: () => set({ error: null }),
+}));
+
+export default useAuthStore;

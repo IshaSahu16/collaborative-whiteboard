@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Socket Test</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <h2>Socket.IO Test</h2>
+  <div id="status">Connecting...</div>
+  <div id="logs"></div>
+
+  <button onclick="joinBoard()">Join Board</button>
+  <button onclick="sendDraw()">Send Draw Event</button>
+  <button onclick="moveCursor()">Move Cursor</button>
+
+  <script>
+    const socket = io('http://localhost:5000', {
+      withCredentials: true
+    });
+
+    const status = document.getElementById('status');
+    const logs = document.getElementById('logs');
+
+    function log(msg) {
+      logs.innerHTML += `<p>✅ ${msg}</p>`;
+      console.log(msg);
+    }
+
+    // Connection events
+    socket.on('connect', () => {
+      status.innerHTML = '🟢 Connected! Socket ID: ' + socket.id;
+      log('Connected to server');
+    });
+
+    socket.on('disconnect', () => {
+      status.innerHTML = '🔴 Disconnected';
+      log('Disconnected from server');
+    });
+
+    socket.on('connect_error', (err) => {
+      status.innerHTML = '🔴 Connection Error: ' + err.message;
+      log('Error: ' + err.message);
+    });
+
+    // Listen for events from server
+    socket.on('user:joined', (data) => {
+      log('user:joined → ' + JSON.stringify(data));
+    });
+
+    socket.on('draw:start', (data) => {
+      log('draw:start received → ' + JSON.stringify(data));
+    });
+
+    socket.on('cursor:move', (data) => {
+      log('cursor:move received → ' + JSON.stringify(data));
+    });
+
+    socket.on('room:users', (count) => {
+      log('Users in room: ' + count);
+    });
+
+    // Emit events
+    function joinBoard() {
+      socket.emit('board:join', {
+        boardId: 'testboard123',
+        user: { _id: 'user001', name: 'Test User' }
+      });
+      log('Emitted board:join');
+    }
+
+    function sendDraw() {
+      socket.emit('draw:start', {
+        boardId: 'testboard123',
+        type: 'pencil',
+        x: 100,
+        y: 200
+      });
+      log('Emitted draw:start');
+    }
+
+    function moveCursor() {
+      socket.emit('cursor:move', {
+        boardId: 'testboard123',
+        x: 300,
+        y: 400
+      });
+      log('Emitted cursor:move');
+    }
+  </script>
+</body>
+</html>
