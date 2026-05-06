@@ -45,6 +45,13 @@ export const deleteElement = async (req, res) => {
 export const uploadAudioNote = async (req, res) => {
   const { x, y, pageId, label } = req.body;
   try {
+    if (!req.file) {
+      return errorResponse(res, 400, 'Audio file is required');
+    }
+    if (!pageId) {
+      return errorResponse(res, 400, 'pageId is required');
+    }
+
     const uploadResult = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         { folder: 'whiteboard/audio', resource_type: 'video' },
@@ -62,11 +69,43 @@ export const uploadAudioNote = async (req, res) => {
       createdBy: req.user._id,
       audioUrl: uploadResult.secure_url,
       publicId: uploadResult.public_id,
-      position: { x, y },
+      position: { x: Number(x), y: Number(y) },
       label,
     });
 
     successResponse(res, 201, 'Audio note uploaded', audioNote);
+  } catch (err) {
+    console.error('UPLOAD AUDIO NOTE ERROR:', err);
+    errorResponse(res, 500, err.message || 'Failed to upload audio note');
+  }
+};
+
+export const getAudioNotes = async (req, res) => {
+  try {
+    const notes = await AudioNote.find({
+      page: req.params.pageId,
+      board: req.params.boardId,
+    }).sort({ createdAt: 1 });
+    successResponse(res, 200, 'Audio notes fetched', notes);
+  } catch (err) {
+    errorResponse(res, 500, err.message);
+  }
+};
+
+export const deleteAudioNote = async (req, res) => {
+  try {
+    const note = await AudioNote.findOne({
+      _id: req.params.audioNoteId,
+      board: req.params.boardId,
+    });
+    if (!note) return errorResponse(res, 404, 'Audio note not found');
+
+    if (note.publicId) {
+      await cloudinary.uploader.destroy(note.publicId, { resource_type: 'video' });
+    }
+
+    await AudioNote.deleteOne({ _id: note._id });
+    successResponse(res, 200, 'Audio note deleted');
   } catch (err) {
     errorResponse(res, 500, err.message);
   }

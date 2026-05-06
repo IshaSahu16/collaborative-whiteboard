@@ -50,7 +50,7 @@ export default function ForgotPassword() {
               We sent a reset link to <strong>{email}</strong>
             </p>
             <p className="text-sm text-muted-foreground">
-              Didn't receive it?{' '}
+              Didn&apos;t receive it?{' '}
               <button onClick={() => setSuccess(false)} className="text-primary font-semibold">
                 Try again
               </button>
@@ -65,7 +65,7 @@ export default function ForgotPassword() {
               </Link>
               <h2 className="text-3xl font-bold text-foreground mb-2">Forgot password?</h2>
               <p className="text-muted-foreground">
-                Enter your email and we'll send you a reset link
+                Enter your email and we&apos;ll send you a reset link
               </p>
             </div>
 

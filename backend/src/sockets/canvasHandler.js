@@ -18,6 +18,10 @@ const canvasHandler = (io, socket) => {
     socket.to(data.boardId).emit('element:delete', data);
   });
 
+  socket.on('element:move', (data) => {
+    socket.to(data.boardId).emit('element:move', data);
+  });
+
   socket.on('canvas:undo', (data) => {
     socket.to(data.boardId).emit('canvas:undo', data);
   });

@@ -13,6 +13,7 @@ import authRoutes from './src/routes/authRoutes.js';
 import boardRoutes from './src/routes/boardRoutes.js';
 import memberRoutes from './src/routes/memberRoutes.js';
 import canvasRoutes from './src/routes/canvasRoutes.js';
+import pageRoutes from './src/routes/pageRoutes.js';
 
 import { notFound, errorHandler } from './src/middleware/errorMiddleware.js';
 
@@ -58,6 +59,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api/boards/:boardId/members', memberRoutes);
+app.use('/api/boards/:boardId/pages', pageRoutes);
 app.use('/api/boards/:boardId/canvas', canvasRoutes);
 
 app.get('/', (req, res) => res.json({ message: 'Whiteboard API running ✅' }));

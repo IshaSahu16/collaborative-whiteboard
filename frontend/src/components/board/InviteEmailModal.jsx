@@ -105,7 +105,7 @@ export default function InviteEmailModal({ isOpen, onClose, board }) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#111827]">Invite to "{board.title}"</DialogTitle>
+          <DialogTitle className="text-[#111827]">{`Invite to "${board.title}"`}</DialogTitle>
           <DialogDescription className="text-[#6B7280]">
             Add members by their registered email address
           </DialogDescription>

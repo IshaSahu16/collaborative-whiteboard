@@ -19,7 +19,7 @@ export default function BoardsPage() {
   // ← Add this
   useEffect(() => {
     fetchBoards();
-  }, []);
+  }, [fetchBoards]);
 
   const handleCreateBoard = async (data) => {
     await addBoard(data);

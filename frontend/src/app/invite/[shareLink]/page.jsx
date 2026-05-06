@@ -59,7 +59,7 @@ export default function InvitePage() {
     };
 
     if (!loading && !authLoading) autoJoin();
-  }, [user, board, loading, authLoading]);
+  }, [user, board, joined, error, joining, loading, authLoading, router, shareLink]);
 
   const handleJoin = async () => {
     if (!user) {
@@ -118,10 +118,10 @@ export default function InvitePage() {
         ) : (
           <>
             <h2 className="text-xl font-bold text-[#111827] mb-2">
-              You've been invited!
+              You&apos;ve been invited!
             </h2>
             <p className="text-[#6B7280] mb-6">
-              Join <strong>"{board?.title}"</strong> to start collaborating
+              Join <strong>{`"${board?.title || ''}"`}</strong> to start collaborating
             </p>
 
             <div className="bg-[#F4F6FB] rounded-xl p-4 mb-6 text-left space-y-2">
@@ -145,7 +145,7 @@ export default function InvitePage() {
 
             {!user && (
               <p className="text-sm text-[#6B7280] mb-4">
-                You'll need to login first to join this board
+                You&apos;ll need to login first to join this board
               </p>
             )}
 

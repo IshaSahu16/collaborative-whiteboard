@@ -33,7 +33,7 @@ export default function ShareBoardModal({ isOpen, onClose, board }) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#111827]">Share "{board.title}"</DialogTitle>
+          <DialogTitle className="text-[#111827]">{`Share "${board.title}"`}</DialogTitle>
           <DialogDescription className="text-[#6B7280]">
             Anyone with this link joins as a Viewer
           </DialogDescription>

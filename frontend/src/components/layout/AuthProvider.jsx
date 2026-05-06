@@ -8,7 +8,7 @@ export default function AuthProvider({ children }) {
 
   useEffect(() => {
     fetchUser(); // runs on every page load/refresh
-  }, []);
+  }, [fetchUser]);
 
   return <>{children}</>;
 }
