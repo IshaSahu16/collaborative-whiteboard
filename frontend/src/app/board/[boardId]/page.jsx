@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Mic, Download, ArrowLeft } from 'lucide-react';
+import { Mic, Download, ArrowLeft, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Canvas from '@/components/canvas/Canvas';
 import Toolbar from '@/components/canvas/Toolbar';
@@ -13,6 +13,7 @@ import LiveCursors from '@/components/canvas/LiveCursors';
 import ExportOptions from '@/components/canvas/ExportOptions';
 import AudioNote from '@/components/canvas/AudioNote';
 import AudioNotePin from '@/components/canvas/AudioNotePin';
+import AudioNotesList from '@/components/canvas/AudioNotesList';
 import useSocket from '@/hooks/useSocket';
 import useAuthStore from '@/store/authStore';
 import useCanvasStore from '@/store/canvasStore';
@@ -39,6 +40,7 @@ export default function BoardPage() {
 	const [isLoadingBoard, setIsLoadingBoard] = useState(true);
 	const [isExportOpen, setIsExportOpen] = useState(false);
 	const [isAudioOpen, setIsAudioOpen] = useState(false);
+	const [isAudioListOpen, setIsAudioListOpen] = useState(false);
 
 	useEffect(() => {
 		const loadBoard = async () => {
@@ -87,8 +89,8 @@ export default function BoardPage() {
 	};
 
 	return (
-		<div className="flex h-screen w-full flex-col overflow-hidden bg-[#F8FAFC]">
-			<div className="z-30 flex items-center justify-between border-b border-[#E5E7EB] bg-white/95 px-4 py-3 backdrop-blur">
+		<div className="flex min-h-screen w-full flex-col overflow-hidden bg-[#F8FAFC]">
+			<div className="z-30 flex flex-col gap-3 border-b border-[#E5E7EB] bg-white/95 px-4 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-2">
 					<Button asChild variant="ghost" size="sm">
 						<Link href="/boards">
@@ -104,19 +106,19 @@ export default function BoardPage() {
 					</div>
 				</div>
 
-				<div className="flex items-center gap-2">
-					<Button variant="outline" size="sm" onClick={() => setIsAudioOpen(true)}>
+				<div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center">
+					<Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => setIsAudioOpen(true)}>
 						<Mic className="h-4 w-4" />
 						Audio Note
 					</Button>
-					<Button size="sm" onClick={() => setIsExportOpen(true)}>
+					<Button size="sm" className="w-full sm:w-auto" onClick={() => setIsExportOpen(true)}>
 						<Download className="h-4 w-4" />
 						Export
 					</Button>
 				</div>
 			</div>
 
-			<div className="relative flex-1 overflow-hidden">
+			<div className="relative flex-1 overflow-hidden pb-28 md:pb-0">
 				<Canvas
 					onCursorMove={sendCursorMove}
 					onDrawStart={sendDrawStart}
@@ -126,9 +128,16 @@ export default function BoardPage() {
 					onElementMove={sendElementMove}
 				/>
 			</div>
-			<Toolbar />
+			<button
+				onClick={() => setIsAudioListOpen(true)}
+				className="fixed bottom-24 left-4 z-40 flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white/95 px-3 py-2 text-xs font-semibold text-[#111827] shadow-lg backdrop-blur md:hidden"
+			>
+				<Headphones className="h-4 w-4 text-[#4F46E5]" />
+				Audio
+			</button>
+			<Toolbar users={users.length ? users : activeUsers} />
 			<PagePanel />
-			<ActiveUsers users={users.length ? users : activeUsers} />
+			<ActiveUsers users={users.length ? users : activeUsers} className="max-md:hidden" />
 			<LiveCursors cursors={cursors} />
 
 			{audioNotes.map((note) => (
@@ -137,6 +146,7 @@ export default function BoardPage() {
 					audioUrl={note.url}
 					position={note.position}
 					onDelete={() => deleteAudioNote(note.id)}
+					className="max-md:hidden"
 				/>
 			))}
 
@@ -145,6 +155,12 @@ export default function BoardPage() {
 				isOpen={isAudioOpen}
 				onClose={() => setIsAudioOpen(false)}
 				onSave={handleSaveAudio}
+			/>
+			<AudioNotesList
+				isOpen={isAudioListOpen}
+				onClose={() => setIsAudioListOpen(false)}
+				notes={audioNotes}
+				onDelete={deleteAudioNote}
 			/>
 		</div>
 	);

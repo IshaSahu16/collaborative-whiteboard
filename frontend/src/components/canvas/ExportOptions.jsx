@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,23 +11,33 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Download, FileImage, FileText } from 'lucide-react';
+import { exportCanvasAsPdf, exportCanvasAsPng } from '@/utils/exportUtils';
 
 export default function ExportOptions({ isOpen, onClose }) {
+  const [isExporting, setIsExporting] = useState(false);
+
   const handleExportPNG = () => {
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = `whiteboard-${Date.now()}.png`;
-      link.click();
+    try {
+      setIsExporting(true);
+      exportCanvasAsPng();
       onClose();
+    } catch (err) {
+      console.error('Failed to export PNG:', err);
+    } finally {
+      setIsExporting(false);
     }
   };
 
   const handleExportPDF = () => {
-    // Note: Requires jspdf library
-    console.log('[v0] PDF export would require jspdf library');
-    onClose();
+    try {
+      setIsExporting(true);
+      exportCanvasAsPdf();
+      onClose();
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -39,6 +50,7 @@ export default function ExportOptions({ isOpen, onClose }) {
         <motion.div className="space-y-3 py-4">
           <motion.button
             onClick={handleExportPNG}
+            disabled={isExporting}
             className="w-full p-4 border-2 border-[#E5E7EB] rounded-lg hover:border-[#4F46E5] hover:bg-[#EEF2FF] transition-colors text-left space-y-2"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -52,6 +64,7 @@ export default function ExportOptions({ isOpen, onClose }) {
 
           <motion.button
             onClick={handleExportPDF}
+            disabled={isExporting}
             className="w-full p-4 border-2 border-[#E5E7EB] rounded-lg hover:border-[#4F46E5] hover:bg-[#EEF2FF] transition-colors text-left space-y-2"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

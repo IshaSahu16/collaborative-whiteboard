@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { registerUser, loginUser, logoutUser, getCurrentUser } from '../services/authService';
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+  getCurrentUser,
+  updateProfile as updateProfileApi,
+  updatePassword as updatePasswordApi,
+} from '../services/authService';
 
 const useAuthStore = create((set) => ({
   user: null,
@@ -54,6 +61,32 @@ const useAuthStore = create((set) => ({
       set({ user: res.data, isAuthenticated: true, isLoading: false });
     } catch (err) {
       set({ user: null, isAuthenticated: false, isLoading: false });
+    }
+  },
+
+  // Update profile
+  updateProfile: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await updateProfileApi(data);
+      set({ user: res.data, isLoading: false });
+      return { success: true };
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      return { success: false, message: err.message };
+    }
+  },
+
+  // Update password
+  updatePassword: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      await updatePasswordApi(data);
+      set({ isLoading: false });
+      return { success: true };
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      return { success: false, message: err.message };
     }
   },
 

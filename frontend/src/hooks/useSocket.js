@@ -17,8 +17,8 @@ export default function useSocket({ boardId, user }) {
 	const rafRef = useRef(null);
 	const pendingCursorRef = useRef(null);
 	const clientIdRef = useRef(null);
+	const knownUsersRef = useRef({});
 
-	const [roomCount, setRoomCount] = useState(1);
 	const [knownUsers, setKnownUsers] = useState({});
 	const [cursors, setCursors] = useState({});
 	const [localCursor, setLocalCursor] = useState(null);
@@ -62,7 +62,7 @@ export default function useSocket({ boardId, user }) {
 				...prev,
 				[data.userId]: {
 					userId: data.userId,
-					name: data.name || prev[data.userId]?.name || knownUsers[data.userId]?.name || 'User',
+					name: data.name || prev[data.userId]?.name || knownUsersRef.current[data.userId]?.name || 'User',
 					x: data.x,
 					y: data.y,
 					color: hashColor(data.userId),
@@ -72,13 +72,17 @@ export default function useSocket({ boardId, user }) {
 
 		const handleUserJoined = (data) => {
 			if (!data?.userId) return;
-			setKnownUsers((prev) => ({
-				...prev,
-				[data.userId]: {
-					id: data.userId,
-					name: data.name || 'Guest',
-				},
-			}));
+			setKnownUsers((prev) => {
+				const next = {
+					...prev,
+					[data.userId]: {
+						id: data.userId,
+						name: data.name || 'Guest',
+					},
+				};
+				knownUsersRef.current = next;
+				return next;
+			});
 		};
 
 		const handleUserLeft = (data) => {
@@ -86,6 +90,7 @@ export default function useSocket({ boardId, user }) {
 			setKnownUsers((prev) => {
 				const next = { ...prev };
 				delete next[data.userId];
+				knownUsersRef.current = next;
 				return next;
 			});
 			setCursors((prev) => {
@@ -95,8 +100,15 @@ export default function useSocket({ boardId, user }) {
 			});
 		};
 
-		const handleRoomUsers = (count) => {
-			setRoomCount(Number(count) || 1);
+		const handleRoomPresence = (payload) => {
+			const list = Array.isArray(payload?.users) ? payload.users : [];
+			const next = {};
+			list.forEach((item) => {
+				if (!item?.id) return;
+				next[item.id] = { id: item.id, name: item.name || 'Guest' };
+			});
+			knownUsersRef.current = next;
+			setKnownUsers(next);
 		};
 
 		const handleDrawStart = (data) => {
@@ -158,7 +170,7 @@ export default function useSocket({ boardId, user }) {
 		socket.on('cursor:move', handleCursorMove);
 		socket.on('user:joined', handleUserJoined);
 		socket.on('user:left', handleUserLeft);
-		socket.on('room:users', handleRoomUsers);
+		socket.on('room:presence', handleRoomPresence);
 		socket.on('draw:start', handleDrawStart);
 		socket.on('draw:move', handleDrawMove);
 		socket.on('draw:end', handleDrawEnd);
@@ -171,7 +183,7 @@ export default function useSocket({ boardId, user }) {
 			socket.off('cursor:move', handleCursorMove);
 			socket.off('user:joined', handleUserJoined);
 			socket.off('user:left', handleUserLeft);
-			socket.off('room:users', handleRoomUsers);
+			socket.off('room:presence', handleRoomPresence);
 			socket.off('draw:start', handleDrawStart);
 			socket.off('draw:move', handleDrawMove);
 			socket.off('draw:end', handleDrawEnd);
@@ -179,7 +191,7 @@ export default function useSocket({ boardId, user }) {
 			socket.off('element:move', handleElementMove);
 			socket.off('canvas:undo', undo);
 		};
-	}, [boardId, user, knownUsers, startRemoteStroke, updateRemoteStroke, commitRemoteStroke, startRemoteShape, updateRemoteShape, commitRemoteShape, deleteElementLocal, updateShapePositionLocal, updateTextPositionLocal, undo]);
+	}, [boardId, user, startRemoteStroke, updateRemoteStroke, commitRemoteStroke, startRemoteShape, updateRemoteShape, commitRemoteShape, deleteElementLocal, updateShapePositionLocal, updateTextPositionLocal, undo]);
 
 	const sendCursorMove = (payload) => {
 		if (!socketRef.current || !boardId || !user) return;
@@ -248,13 +260,8 @@ export default function useSocket({ boardId, user }) {
 		Object.values(knownUsers).forEach((u) => {
 			if (u.id !== selfId) list.push(u);
 		});
-
-		const missing = Math.max(0, roomCount - list.length);
-		for (let i = 0; i < missing; i += 1) {
-			list.push({ id: `guest-${i}`, name: 'Guest' });
-		}
 		return list;
-	}, [knownUsers, roomCount, user]);
+	}, [knownUsers, user]);
 
 	const cursorList = useMemo(() => {
 		const list = Object.values(cursors);

@@ -67,7 +67,36 @@ function ActionBtn({ icon: Icon, onClick, title, danger = false, className = '' 
 }
 
 // ─── Mobile bottom bar ─────────────────────────────────────────────────────────
-function MobileToolbar() {
+function MobilePresence({ users = [] }) {
+  if (!users.length) return null;
+  const shown = users.slice(0, 3);
+  const extra = Math.max(0, users.length - shown.length);
+
+  return (
+    <div className="flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-2 py-1">
+      <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-[#22C55E]" />
+      <div className="flex -space-x-2">
+        {shown.map((user) => (
+          <div
+            key={user.id}
+            className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#EEF2FF] text-[10px] font-semibold text-[#4F46E5]"
+            title={user.name}
+          >
+            {user.name?.charAt(0)?.toUpperCase() || 'U'}
+          </div>
+        ))}
+        {extra > 0 && (
+          <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#F3F4F6] text-[10px] font-semibold text-[#6B7280]">
+            +{extra}
+          </div>
+        )}
+      </div>
+      <span className="text-xs font-semibold text-[#111827]">{users.length}</span>
+    </div>
+  );
+}
+
+function MobileToolbar({ users }) {
   const { tool, setTool, undo, redo, clearCanvas, zoom, zoomIn, zoomOut, setZoom, setPanOffset } = useCanvasStore();
   const [expanded, setExpanded] = useState(false);
 
@@ -91,10 +120,24 @@ function MobileToolbar() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 24, stiffness: 320 }}
-            className="border-t border-[#E5E7EB] bg-white/98 px-4 py-3 shadow-2xl backdrop-blur-md"
+            className="border-t border-[#E5E7EB] bg-white/98 px-3 py-3 shadow-2xl backdrop-blur-md"
           >
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Tools & Actions
+              </span>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setExpanded(false)}
+                className="rounded-full border border-[#E5E7EB] bg-white p-1 text-[#6B7280]"
+                aria-label="Close toolbar"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </motion.button>
+            </div>
+
             {/* Tool grid */}
-            <div className="mb-3 grid grid-cols-7 gap-1">
+            <div className="mb-2 grid grid-cols-4 gap-1 sm:grid-cols-7">
               {tools.map((t) => (
                 <ToolBtn
                   key={t.id}
@@ -106,31 +149,26 @@ function MobileToolbar() {
             </div>
 
             {/* Color + stroke */}
-            <div className="mb-3 flex items-center gap-3 border-t border-[#F3F4F6] pt-3">
+            <div className="mb-2 flex items-center gap-3 border-t border-[#F3F4F6] pt-2">
               <div className="flex-1"><ColorPicker /></div>
               <div className="flex-1"><StrokeWidth /></div>
             </div>
 
-            {/* Actions row */}
-            <div className="flex items-center justify-between border-t border-[#F3F4F6] pt-2">
-              <div className="flex gap-1">
-                <ActionBtn icon={Undo2} onClick={undo} title="Undo" />
-                <ActionBtn icon={Redo2} onClick={redo} title="Redo" />
+            {/* Actions grid */}
+            <div className="grid grid-cols-4 gap-1 border-t border-[#F3F4F6] pt-2">
+              <ActionBtn icon={ZoomOut} onClick={zoomOut} title="Zoom Out" />
+              <ActionBtn icon={ZoomIn} onClick={zoomIn} title="Zoom In" />
+              <button
+                onClick={resetView}
+                className="col-span-2 flex items-center justify-center rounded-xl px-2 py-2 text-xs font-semibold text-[#4F46E5] hover:bg-[#EEF2FF]"
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+              <div className="col-span-2 flex items-center justify-center">
+                <MobilePresence users={users} />
               </div>
-              <div className="flex items-center gap-1">
-                <ActionBtn icon={ZoomOut} onClick={zoomOut} title="Zoom Out" />
-                <button
-                  onClick={resetView}
-                  className="rounded-lg px-2 py-1 text-xs font-semibold text-[#4F46E5] hover:bg-[#EEF2FF]"
-                >
-                  {Math.round(zoom * 100)}%
-                </button>
-                <ActionBtn icon={ZoomIn} onClick={zoomIn} title="Zoom In" />
-              </div>
-              <div className="flex gap-1">
-                <ActionBtn icon={Download} onClick={handleExport} title="Export" />
-                <ActionBtn icon={Trash2} onClick={clearCanvas} title="Clear" danger />
-              </div>
+              <ActionBtn icon={Download} onClick={handleExport} title="Export" />
+              <ActionBtn icon={Trash2} onClick={clearCanvas} title="Clear" danger />
             </div>
           </motion.div>
         )}
@@ -243,11 +281,11 @@ function DesktopToolbar() {
   );
 }
 
-export default function Toolbar() {
+export default function Toolbar({ users = [] }) {
   return (
     <>
       <DesktopToolbar />
-      <MobileToolbar />
+      <MobileToolbar users={users} />
     </>
   );
 }

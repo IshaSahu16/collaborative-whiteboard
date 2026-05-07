@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { MousePointer2, Pen, Eraser, Type, Square, Circle, Minus } from 'lucide-react';
 import useCanvasStore from '@/store/canvasStore';
 import { drawPerfectFreehandStroke } from '@/utils/drawingUtils';
+import { detectShapeFromStroke } from '@/utils/shapeCorrection';
+import { getRoughCanvas } from '@/lib/roughjs';
 
 const toolIcons = {
   cursor: MousePointer2,
@@ -34,28 +36,47 @@ const drawGrid = (ctx, width, height, pan, zoom) => {
   ctx.restore();
 };
 
-const drawShape = (ctx, shape) => {
+const drawShape = (ctx, shape, roughCanvas) => {
   ctx.save();
-  ctx.strokeStyle = shape.color;
-  ctx.lineWidth = shape.width;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
   const { startX, startY, endX, endY } = shape;
   const w = endX - startX;
   const h = endY - startY;
-  if (shape.type === 'rectangle') {
-    ctx.strokeRect(startX, startY, w, h);
-  } else if (shape.type === 'circle') {
-    const rx = Math.abs(w) / 2;
-    const ry = Math.abs(h) / 2;
-    ctx.beginPath();
-    ctx.ellipse(startX + w / 2, startY + h / 2, rx, ry, 0, 0, Math.PI * 2);
-    ctx.stroke();
-  } else if (shape.type === 'line') {
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
-    ctx.stroke();
+  const useRough = shape.rough && roughCanvas;
+
+  if (useRough) {
+    const roughness = 1.1;
+    const options = {
+      stroke: shape.color,
+      strokeWidth: shape.width,
+      roughness,
+      seed: Number.isFinite(shape.roughSeed) ? shape.roughSeed : 1,
+    };
+    if (shape.type === 'rectangle') {
+      roughCanvas.rectangle(startX, startY, w, h, options);
+    } else if (shape.type === 'circle') {
+      roughCanvas.ellipse(startX + w / 2, startY + h / 2, Math.abs(w), Math.abs(h), options);
+    } else if (shape.type === 'line') {
+      roughCanvas.line(startX, startY, endX, endY, options);
+    }
+  } else {
+    ctx.strokeStyle = shape.color;
+    ctx.lineWidth = shape.width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (shape.type === 'rectangle') {
+      ctx.strokeRect(startX, startY, w, h);
+    } else if (shape.type === 'circle') {
+      const rx = Math.abs(w) / 2;
+      const ry = Math.abs(h) / 2;
+      ctx.beginPath();
+      ctx.ellipse(startX + w / 2, startY + h / 2, rx, ry, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (shape.type === 'line') {
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
   }
   ctx.restore();
 };
@@ -121,6 +142,7 @@ export default function Canvas({
     updateActiveShape,
     commitShape,
     cancelActive,
+    clearActiveStroke,
     addText,
     updateShapePosition,
     updateTextPosition,
@@ -132,6 +154,7 @@ export default function Canvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    const roughCanvas = getRoughCanvas(canvas);
     const dpr = window.devicePixelRatio || 1;
     const { width, height } = canvasSize;
     if (!width || !height) return;
@@ -161,7 +184,7 @@ export default function Canvas({
 
     // Committed shapes
     [...shapes, ...Object.values(remoteShapes), ...(activeShape ? [activeShape] : [])].forEach((shape) => {
-      drawShape(ctx, shape);
+      drawShape(ctx, shape, roughCanvas);
     });
 
     // Texts
@@ -429,14 +452,54 @@ export default function Canvas({
     panDragRef.current = null;
 
     if (tool === 'pen' && activeStroke) {
+      const corrected = detectShapeFromStroke(activeStroke.points);
       onDrawEnd({ kind: 'pencil', strokeId: activeStroke.id });
-      commitStroke();
+
+      if (corrected) {
+        const shapeId = Date.now();
+        const shapeColor = activeStroke.color;
+        const shapeWidth = activeStroke.width;
+        const roughSeed = Math.floor(Math.random() * 1000000);
+
+        clearActiveStroke();
+
+        // Remove the temporary pen stroke on other clients
+        onElementDelete({ elementType: 'stroke', elementId: activeStroke.id });
+
+        beginShape(
+          corrected.type,
+          corrected.startX,
+          corrected.startY,
+          shapeColor,
+          shapeWidth,
+          shapeId,
+          { rough: true, roughSeed, source: 'auto' }
+        );
+        updateActiveShape(corrected.endX, corrected.endY);
+
+        onDrawStart({
+          kind: 'shape',
+          shapeId,
+          shapeType: corrected.type,
+          startX: corrected.startX,
+          startY: corrected.startY,
+          endX: corrected.endX,
+          endY: corrected.endY,
+          color: shapeColor,
+          width: shapeWidth,
+        });
+        onDrawMove({ kind: 'shape', endX: corrected.endX, endY: corrected.endY });
+        onDrawEnd({ kind: 'shape', shapeId });
+        commitShape();
+      } else {
+        commitStroke();
+      }
     } else if (['rectangle', 'circle', 'line'].includes(tool) && activeShape) {
       onDrawEnd({ kind: 'shape', shapeId: activeShape.id });
       commitShape();
     }
     else cancelActive();
-  }, [isPointerDown, isDraggingText, isDraggingShape, tool, activeStroke, activeShape, onDrawEnd, commitStroke, commitShape, cancelActive]);
+  }, [isPointerDown, isDraggingText, isDraggingShape, tool, activeStroke, activeShape, onDrawEnd, commitStroke, commitShape, cancelActive, clearActiveStroke]);
 
   // ─── Pinch-zoom (two fingers) ──────────────────────────────────────────────
   const handleTouchStart = useCallback((e) => {

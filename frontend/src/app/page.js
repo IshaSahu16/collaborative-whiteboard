@@ -67,7 +67,7 @@ export default function HomePage() {
               <LayoutDashboard className="w-5 h-5 text-white" />
             </motion.div>
             <span className="text-lg font-semibold text-[#111827]">
-              BoardFlow
+              CollabCanvas
             </span>
           </Link>
 
@@ -108,7 +108,7 @@ export default function HomePage() {
             transition={{ delay: 0.2 }}
             className="mt-6 text-lg text-[#6B7280] text-balance"
           >
-            BoardFlow is a collaborative whiteboard platform that helps teams
+            CollabCanvas is a collaborative whiteboard platform that helps teams
             brainstorm, plan, and create together. No matter where you are.
           </motion.p>
           <motion.div

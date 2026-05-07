@@ -41,6 +41,8 @@ const mapElementsToState = (elements) => {
         endY: data.endY ?? 0,
         color: data.color || '#000000',
         width: data.width || 2,
+        rough: Boolean(data.rough),
+        roughSeed: data.roughSeed ?? null,
       });
       return;
     }
@@ -345,7 +347,7 @@ const useCanvasStore = create((set, get) => ({
     );
   },
 
-  beginShape: (type, startX, startY, color, width, idOverride) => {
+  beginShape: (type, startX, startY, color, width, idOverride, meta = {}) => {
     set({
       activeShape: {
         id: idOverride || Date.now(),
@@ -357,6 +359,7 @@ const useCanvasStore = create((set, get) => ({
         endY: startY,
         color,
         width,
+        ...meta,
       },
     });
   },
@@ -391,12 +394,15 @@ const useCanvasStore = create((set, get) => ({
         endY: activeShape.endY,
         color: activeShape.color,
         width: activeShape.width,
+        rough: activeShape.rough || false,
+        roughSeed: activeShape.roughSeed ?? null,
       },
       activeShape.id
     );
   },
 
   cancelActive: () => set({ activeStroke: null, activeShape: null }),
+  clearActiveStroke: () => set({ activeStroke: null }),
 
   // ── Committed element operations ─────────────────────────────────────────
 

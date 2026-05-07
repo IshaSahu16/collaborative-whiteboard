@@ -19,3 +19,15 @@ export const logoutUser = () =>
 
 export const getCurrentUser = () =>
   api('/api/auth/me');
+
+export const updateProfile = (data) =>
+  api('/api/auth/profile', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+export const updatePassword = (data) =>
+  api('/api/auth/password', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, X } from 'lucide-react';
 
-export default function AudioNotePin({ audioUrl, position, onDelete }) {
+export default function AudioNotePin({ audioUrl, position, onDelete, className = '' }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioRef, setAudioRef] = useState(null);
 
@@ -22,10 +22,11 @@ export default function AudioNotePin({ audioUrl, position, onDelete }) {
 
   return (
     <motion.div
-      className="absolute bg-white rounded-lg shadow-lg border-2 border-[#4F46E5] p-3 space-y-2 min-w-[180px]"
+      className={`fixed z-30 rounded-lg border-2 border-[#4F46E5] bg-white p-2 shadow-lg sm:p-3 space-y-2 min-w-[140px] sm:min-w-[180px] max-w-[70vw] ${className}`}
       style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
+        left: `clamp(12px, ${position.x}px, calc(100vw - 12px))`,
+        top: `clamp(12px, ${position.y}px, calc(100vh - 160px))`,
+        width: 'clamp(140px, 60vw, 220px)',
       }}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}

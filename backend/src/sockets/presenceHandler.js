@@ -1,3 +1,18 @@
+const getRoomPresence = (io, boardId) => {
+  const room = io.sockets.adapter.rooms.get(boardId);
+  if (!room) return { users: [], count: 0 };
+
+  const users = Array.from(room).map((socketId) => {
+    const current = io.sockets.sockets.get(socketId);
+    return {
+      id: current?.userId || socketId,
+      name: current?.userName || 'Guest',
+    };
+  });
+
+  return { users, count: room.size };
+};
+
 const presenceHandler = (io, socket) => {
 
   //user presence and cursor movement
@@ -18,18 +33,23 @@ const presenceHandler = (io, socket) => {
     socket.userName = user?.name || 'Guest';
     socket.currentBoard = boardId;
     socket.to(boardId).emit('user:joined', { userId: socket.userId, name: socket.userName });
-    const room = io.sockets.adapter.rooms.get(boardId);          // Get the room object for the board
-    io.to(socket.id).emit('room:users', room ? room.size : 1);  // Emit the current number of users in the room to the newly joined user
+    const presence = getRoomPresence(io, boardId);
+    io.to(boardId).emit('room:presence', presence);
   });
 
   socket.on('board:leave', ({ boardId }) => {
     socket.leave(boardId);
     socket.to(boardId).emit('user:left', { userId: socket.userId });
+    socket.currentBoard = null;
+    const presence = getRoomPresence(io, boardId);
+    io.to(boardId).emit('room:presence', presence);
   });
 
   socket.on('disconnect', () => {
     if (socket.currentBoard) {
       socket.to(socket.currentBoard).emit('user:left', { userId: socket.userId });
+      const presence = getRoomPresence(io, socket.currentBoard);
+      io.to(socket.currentBoard).emit('room:presence', presence);
     }
   });
 };

@@ -124,3 +124,56 @@ export const logout = (req, res) => {
 export const getMe = async (req, res) => {
   return successResponse(res, 200, 'User fetched', req.user);
 };
+
+export const updateProfile = async (req, res) => {
+  const { name } = req.body;
+
+  if (!name || !name.trim()) {
+    return errorResponse(res, 400, 'Name is required');
+  }
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return errorResponse(res, 404, 'User not found');
+
+    user.name = name.trim();
+    await user.save();
+
+    return successResponse(res, 200, 'Profile updated', {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+    });
+  } catch (err) {
+    return errorResponse(res, 500, err.message);
+  }
+};
+
+export const updatePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return errorResponse(res, 400, 'Current and new password are required');
+  }
+
+  if (newPassword.length < 6) {
+    return errorResponse(res, 400, 'Password must be at least 6 characters');
+  }
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return errorResponse(res, 404, 'User not found');
+
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) return errorResponse(res, 401, 'Current password is incorrect');
+
+    const salt = await bcrypt.genSalt(12);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    return successResponse(res, 200, 'Password updated successfully');
+  } catch (err) {
+    return errorResponse(res, 500, err.message);
+  }
+};

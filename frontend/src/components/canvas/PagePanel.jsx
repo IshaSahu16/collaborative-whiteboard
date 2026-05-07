@@ -1,31 +1,55 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Copy } from 'lucide-react';
+import { Plus, Trash2, Copy, Layers, X } from 'lucide-react';
 import useCanvasStore from '@/store/canvasStore';
 
 export default function PagePanel() {
   const { pages = [], currentPageId, addPage, setCurrentPage, deletePage, duplicatePage } =
     useCanvasStore();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <motion.div
-      className="fixed bottom-4 left-4 right-4 z-40 max-h-64 overflow-y-auto rounded-2xl border border-[#E5E7EB] bg-white p-3 shadow-lg sm:left-auto sm:w-80 md:top-24 md:bottom-auto md:right-4 md:left-auto md:w-72 md:max-h-[calc(100vh-7rem)]"
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <>
+      <motion.button
+        onClick={() => setIsOpen((v) => !v)}
+        className="fixed bottom-24 right-4 z-40 flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white/95 px-3 py-2 text-xs font-semibold text-[#111827] shadow-lg backdrop-blur md:hidden"
+        whileTap={{ scale: 0.95 }}
+      >
+        <Layers className="h-4 w-4 text-[#4F46E5]" />
+        Pages
+      </motion.button>
+
+      <motion.div
+        className={`fixed bottom-24 left-4 right-4 z-40 max-h-[50vh] overflow-y-auto rounded-2xl border border-[#E5E7EB] bg-white p-3 shadow-lg sm:bottom-4 sm:left-auto sm:w-80 md:top-24 md:bottom-auto md:right-4 md:left-auto md:block md:w-72 md:max-h-[calc(100vh-7rem)] ${
+          isOpen ? 'block' : 'hidden'
+        } md:!block`}
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
       <div className="space-y-2">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-sm text-[#111827]">Pages</h3>
-          <motion.button
-            onClick={addPage}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Plus className="h-4 w-4 text-[#4F46E5]" />
-          </motion.button>
+          <div className="flex items-center gap-2">
+            <motion.button
+              onClick={addPage}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Plus className="h-4 w-4 text-[#4F46E5]" />
+            </motion.button>
+            <motion.button
+              onClick={() => setIsOpen(false)}
+              className="rounded-full border border-[#E5E7EB] bg-white p-1 text-[#6B7280] md:hidden"
+              whileTap={{ scale: 0.9 }}
+              aria-label="Close pages panel"
+            >
+              <X className="h-3 w-3" />
+            </motion.button>
+          </div>
         </div>
 
         {pages.length === 0 ? (
@@ -48,7 +72,10 @@ export default function PagePanel() {
               >
                 <div className="flex items-center justify-between">
                   <button
-                    onClick={() => setCurrentPage(page.id)}
+                    onClick={() => {
+                      setCurrentPage(page.id);
+                      setIsOpen(false);
+                    }}
                     className="flex-1 text-left text-sm font-medium text-[#111827] hover:text-[#4F46E5]"
                   >
                     Page {index + 1}
@@ -77,6 +104,7 @@ export default function PagePanel() {
           </div>
         )}
       </div>
-    </motion.div>
+      </motion.div>
+    </>
   );
 }

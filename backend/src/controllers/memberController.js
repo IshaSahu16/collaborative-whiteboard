@@ -26,8 +26,19 @@ export const updateMemberRole = async (req, res) => {
   const { userId, role } = req.body;
   try {
     const board = await Board.findById(req.params.boardId);
+    if (!board) return errorResponse(res, 404, 'Board not found');
+
+    const allowedRoles = ['viewer', 'editor'];
+    if (!allowedRoles.includes(role)) {
+      return errorResponse(res, 400, 'Invalid role');
+    }
+
     const member = board.members.find((m) => m.user.toString() === userId);
     if (!member) return errorResponse(res, 404, 'Member not found');
+
+    if (member.role === 'owner') {
+      return errorResponse(res, 400, 'Owner role cannot be changed');
+    }
 
     member.role = role;
     await board.save();

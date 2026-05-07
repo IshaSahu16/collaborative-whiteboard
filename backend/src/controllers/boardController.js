@@ -26,6 +26,7 @@ export const getMyBoards = async (req, res) => {
   try {
     const boards = await Board.find({ 'members.user': req.user._id })
       .populate('owner', 'name email')
+      .populate('members.user', 'name email avatar')
       .sort({ updatedAt: -1 });
     successResponse(res, 200, 'Boards fetched', boards);
   } catch (err) {
