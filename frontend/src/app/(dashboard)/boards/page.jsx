@@ -18,7 +18,8 @@ import useAuthStore from "@/store/authStore";
 export default function BoardsPage() {
   const router = useRouter();
 
-  const { user, fetchUser, isLoading } = useAuthStore();
+  // const { user, fetchUser, isLoading } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
 
   const {
     boards,
@@ -33,47 +34,69 @@ export default function BoardsPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [shareTarget, setShareTarget] = useState(null);
   const [inviteTarget, setInviteTarget] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
+  // const [authChecked, setAuthChecked] = useState(false);
 
   // Fetch logged-in user
-  useEffect(() => {
-    let isMounted = true;
+  // useEffect(() => {
+  //   let isMounted = true;
 
-    const initAuth = async () => {
-      await fetchUser();
-      if (isMounted) {
-        setAuthChecked(true);
-      }
-    };
+  //   const initAuth = async () => {
+  //     await fetchUser();
+  //     if (isMounted) {
+  //       setAuthChecked(true);
+  //     }
+  //   };
 
-    initAuth();
+  //   initAuth();
 
-    return () => {
-      isMounted = false;
-    };
-  }, [fetchUser]);
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [fetchUser]);
 
   // Redirect if not authenticated
-  useEffect(() => {
-    if (authChecked && !isLoading && !user) {
-      router.push("/login");
-    }
-  }, [authChecked, isLoading, user, router]);
+  // useEffect(() => {
+  //   if (authChecked && !isLoading && !user) {
+  //     router.push("/login");
+  //   }
+  // }, [authChecked, isLoading, user, router]);
 
   // Fetch boards after auth confirmed
-  useEffect(() => {
-    if (authChecked && user) {
-      fetchBoards();
-    }
-  }, [authChecked, user, fetchBoards]);
+  // useEffect(() => {
+  //   if (authChecked && user) {
+  //     fetchBoards();
+  //   }
+  // }, [authChecked, user, fetchBoards]);
 
-  if (!authChecked || isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
+  // if (!authChecked || isLoading || !user) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       Loading...
+  //     </div>
+  //   );
+  // }
+
+  useEffect(() => {
+  if (!isLoading && !user) {
+    router.push('/login');
   }
+}, [isLoading, user, router]);
+
+useEffect(() => {
+  if (user) {
+    fetchBoards();
+  }
+}, [user]);
+
+if (isLoading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      Loading...
+    </div>
+  );
+}
+
+if (!user) return null;
 
   const handleCreateBoard = async (data) => {
     await addBoard(data);
