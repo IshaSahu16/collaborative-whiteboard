@@ -32,7 +32,7 @@ const allowedOrigins = [
   'http://localhost:3000',                              // Local dev
   'http://localhost:3001',                              // Backup local port
   process.env.CLIENT_URL,                               // Vercel production URL
-  'https://your-app-name.vercel.app',                   // Replace with your actual Vercel URL
+  'https://collaborative-whiteboard-coral.vercel.app/',                   // Replace with your actual Vercel URL
 ].filter(Boolean);  // Remove undefined values
 
 const corsOptions = {
