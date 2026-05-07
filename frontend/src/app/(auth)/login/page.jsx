@@ -55,7 +55,8 @@ export default function Login() {
     }
 
     // Default redirect
-    window.location.href = '/boards';
+    // window.location.href = '/boards';
+    router.push('/boards');
   } else {
     setError(result.message || 'Login failed');
   }

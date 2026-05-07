@@ -32,6 +32,7 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await loginUser(data);
+      localStorage.setItem('authToken', res.data.token); //added now
       set({ user: res.data, isAuthenticated: true, isLoading: false });
       return { success: true };
     } catch (err) {
