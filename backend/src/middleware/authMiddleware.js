@@ -5,6 +5,9 @@ import { errorResponse } from '../utils/apiResponse.js';
 const protect = async (req, res, next) => {
   try {
     let token = req.cookies.jwt;
+    if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
     if (!token) return errorResponse(res, 401, 'Not authorized, no token');
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

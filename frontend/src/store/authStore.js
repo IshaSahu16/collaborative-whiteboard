@@ -19,6 +19,9 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await registerUser(data);
+      if (res.data?.token && typeof window !== 'undefined') {
+        window.localStorage.setItem('authToken', res.data.token);
+      }
       set({ user: res.data, isAuthenticated: true, isLoading: false });
       return { success: true };
     } catch (err) {
@@ -32,6 +35,9 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await loginUser(data);
+      if (res.data?.token && typeof window !== 'undefined') {
+        window.localStorage.setItem('authToken', res.data.token);
+      }
       set({ user: res.data, isAuthenticated: true, isLoading: false });
       return { success: true };
     } catch (err) {
@@ -45,6 +51,9 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true });
     try {
       await logoutUser();
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('authToken');
+      }
       set({ user: null, isAuthenticated: false, isLoading: false });
       return { success: true };
     } catch (err) {

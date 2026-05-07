@@ -22,10 +22,13 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await User.create({ name, email, password: hashedPassword });
-    generateToken(res, user._id);
+    const token = generateToken(res, user._id);
 
     return successResponse(res, 201, 'Registered successfully', {
-      _id: user._id, name: user.name, email: user.email,
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token,
     });
   } catch (err) {
     return errorResponse(res, 500, err.message);
@@ -43,9 +46,12 @@ export const login = async (req, res) => {
     if (!user || !(await user.matchPassword(password)))
       return errorResponse(res, 401, 'Invalid email or password');
 
-    generateToken(res, user._id);
+    const token = generateToken(res, user._id);
     return successResponse(res, 200, 'Logged in successfully', {
-      _id: user._id, name: user.name, email: user.email,
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token,
     });
   } catch (err) {
     return errorResponse(res, 500, err.message);
