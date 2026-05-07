@@ -4,6 +4,7 @@ const api = async (endpoint, options = {}) => {
   const authToken = typeof window !== 'undefined' ? window.localStorage.getItem('authToken') : null;
 
   const res = await fetch(`${BASE_URL}${endpoint}`, {
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
