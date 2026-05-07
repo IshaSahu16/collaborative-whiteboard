@@ -25,47 +25,96 @@ const server = http.createServer(app);
 
 initSocket(server);
 
+// ─────────────────────────────────────────────────────────────────────
+// ✅ PRODUCTION-READY CORS — supports both localhost and deployed frontend
+// ─────────────────────────────────────────────────────────────────────
+const allowedOrigins = [
+  'http://localhost:3000',                              // Local dev
+  'http://localhost:3001',                              // Backup local port
+  process.env.CLIENT_URL,                               // Vercel production URL
+  'https://your-app-name.vercel.app',                   // Replace with your actual Vercel URL
+].filter(Boolean);  // Remove undefined values
+
 const corsOptions = {
-  origin: 'http://localhost:3000',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('❌ CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,  // Allow cookies to be sent cross-origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: ['Set-Cookie'],  // Important for cookie auth
 };
 
 app.use(cors(corsOptions));
 
-// Handle preflight for all routes
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    return res.sendStatus(204);
-  }
-  next();
-});
+// ─────────────────────────────────────────────────────────────────────
+// ✅ Explicit preflight handler (optional but safe)
+// ─────────────────────────────────────────────────────────────────────
+app.options('*', cors(corsOptions));
 
+// ─────────────────────────────────────────────────────────────────────
+// ✅ HELMET — secure HTTP headers (with cross-origin fixes for Socket.IO)
+// ─────────────────────────────────────────────────────────────────────
 app.use(helmet({
-  crossOriginResourcePolicy: false,
-  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },  // Allow cross-origin resources
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
 }));
 
-app.use(morgan('dev'));
+// ─────────────────────────────────────────────────────────────────────
+// ✅ Logging (hide in production for performance)
+// ─────────────────────────────────────────────────────────────────────
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// ─────────────────────────────────────────────────────────────────────
+// API Routes
+// ─────────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api/boards/:boardId/members', memberRoutes);
 app.use('/api/boards/:boardId/pages', pageRoutes);
 app.use('/api/boards/:boardId/canvas', canvasRoutes);
 
-app.get('/', (req, res) => res.json({ message: 'Whiteboard API running ✅' }));
+// ─────────────────────────────────────────────────────────────────────
+// Health check endpoint (useful for Render to verify deployment)
+// ─────────────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Whiteboard API running ✅',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+  });
+});
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// Error handlers (must be last)
+// ─────────────────────────────────────────────────────────────────────
 app.use(notFound);
 app.use(errorHandler);
 
+// ─────────────────────────────────────────────────────────────────────
+// Start server
+// ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT} 🚀`));
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 Allowed origins:`, allowedOrigins);
+});

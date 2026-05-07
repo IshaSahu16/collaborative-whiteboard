@@ -3,9 +3,16 @@ import canvasHandler from './canvasHandler.js';
 import presenceHandler from './presenceHandler.js';
 
 const initSocket = (server) => {
+
+  const allowedOrigins = [
+  'http://localhost:3000',
+  'https://boardflow-frontend.vercel.app',
+  process.env.CLIENT_URL,
+  ].filter(Boolean);
+
   const io = new Server(server, {
     cors: {
-      origin: 'http://localhost:3000',
+      origin: allowedOrigins,
       credentials: true,
       methods: ['GET', 'POST'],
     },
