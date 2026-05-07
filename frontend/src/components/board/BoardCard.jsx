@@ -133,14 +133,34 @@ export default function BoardCard({
             </Link>
 
             {/* Menu */}
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {/* Share Menu */}
+            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+              {/* Mobile quick actions (no hover on touch) */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:hidden"
+                onClick={handleShareLink}
+                title="Share by Link"
+              >
+                <Link2 className="h-4 w-4 text-[#9CA3AF]" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:hidden"
+                onClick={handleInviteEmail}
+                title="Invite by Email"
+              >
+                <Mail className="h-4 w-4 text-[#9CA3AF]" />
+              </Button>
+
+              {/* Desktop share menu */}
               <DropdownMenu open={isShareOpen} onOpenChange={setIsShareOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="hidden h-8 w-8 sm:inline-flex"
                   >
                     <Share2 className="h-4 w-4 text-[#9CA3AF]" />
                   </Button>

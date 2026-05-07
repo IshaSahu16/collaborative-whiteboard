@@ -22,17 +22,19 @@ const tools = [
   { id: 'line', label: 'Line', icon: Minus },
 ];
 
-function ToolBtn({ t, active, onClick }) {
+function ToolBtn({ t, active, onClick, disabled = false }) {
   const Icon = t.icon;
   return (
     <motion.button
       whileTap={{ scale: 0.9 }}
       onClick={onClick}
+      disabled={disabled}
       title={t.label}
       aria-label={t.label}
       className={`
         flex flex-col items-center justify-center gap-0.5
         rounded-xl p-2 transition-colors duration-150
+        ${disabled ? 'cursor-not-allowed opacity-45' : ''}
         ${active
           ? 'bg-[#4F46E5] text-white shadow-sm'
           : 'text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]'}
@@ -46,15 +48,17 @@ function ToolBtn({ t, active, onClick }) {
   );
 }
 
-function ActionBtn({ icon: Icon, onClick, title, danger = false, className = '' }) {
+function ActionBtn({ icon: Icon, onClick, title, danger = false, className = '', disabled = false }) {
   return (
     <motion.button
       whileTap={{ scale: 0.9 }}
       onClick={onClick}
+      disabled={disabled}
       title={title}
       aria-label={title}
       className={`
         flex items-center justify-center rounded-xl p-2.5 transition-colors
+        ${disabled ? 'cursor-not-allowed opacity-45' : ''}
         ${danger
           ? 'text-[#DC2626] hover:bg-red-50'
           : 'text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]'}
@@ -96,7 +100,7 @@ function MobilePresence({ users = [] }) {
   );
 }
 
-function MobileToolbar({ users }) {
+function MobileToolbar({ users, canEdit }) {
   const { tool, setTool, undo, redo, clearCanvas, zoom, zoomIn, zoomOut, setZoom, setPanOffset } = useCanvasStore();
   const [expanded, setExpanded] = useState(false);
 
@@ -143,16 +147,23 @@ function MobileToolbar({ users }) {
                   key={t.id}
                   t={t}
                   active={tool === t.id}
-                  onClick={() => { setTool(t.id); setExpanded(false); }}
+                  disabled={!canEdit && t.id !== 'cursor'}
+                  onClick={() => {
+                    if (!canEdit && t.id !== 'cursor') return;
+                    setTool(t.id);
+                    setExpanded(false);
+                  }}
                 />
               ))}
             </div>
 
             {/* Color + stroke */}
-            <div className="mb-2 flex items-center gap-3 border-t border-[#F3F4F6] pt-2">
-              <div className="flex-1"><ColorPicker /></div>
-              <div className="flex-1"><StrokeWidth /></div>
-            </div>
+            {canEdit && (
+              <div className="mb-2 flex items-center gap-3 border-t border-[#F3F4F6] pt-2">
+                <div className="flex-1"><ColorPicker /></div>
+                <div className="flex-1"><StrokeWidth /></div>
+              </div>
+            )}
 
             {/* Actions grid */}
             <div className="grid grid-cols-4 gap-1 border-t border-[#F3F4F6] pt-2">
@@ -168,7 +179,7 @@ function MobileToolbar({ users }) {
                 <MobilePresence users={users} />
               </div>
               <ActionBtn icon={Download} onClick={handleExport} title="Export" />
-              <ActionBtn icon={Trash2} onClick={clearCanvas} title="Clear" danger />
+              <ActionBtn icon={Trash2} onClick={clearCanvas} title="Clear" danger disabled={!canEdit} />
             </div>
           </motion.div>
         )}
@@ -184,8 +195,12 @@ function MobileToolbar({ users }) {
               <motion.button
                 key={t.id}
                 whileTap={{ scale: 0.85 }}
-                onClick={() => setTool(t.id)}
-                className={`rounded-lg p-2.5 ${tool === t.id ? 'bg-[#4F46E5] text-white' : 'text-[#6B7280]'}`}
+                onClick={() => {
+                  if (!canEdit && t.id !== 'cursor') return;
+                  setTool(t.id);
+                }}
+                disabled={!canEdit && t.id !== 'cursor'}
+                className={`rounded-lg p-2.5 ${tool === t.id ? 'bg-[#4F46E5] text-white' : 'text-[#6B7280]'} ${!canEdit && t.id !== 'cursor' ? 'cursor-not-allowed opacity-45' : ''}`}
               >
                 <Icon className="h-5 w-5" />
               </motion.button>
@@ -195,8 +210,8 @@ function MobileToolbar({ users }) {
 
         {/* Undo / Redo quick */}
         <div className="flex gap-0.5">
-          <ActionBtn icon={Undo2} onClick={undo} title="Undo" />
-          <ActionBtn icon={Redo2} onClick={redo} title="Redo" />
+          <ActionBtn icon={Undo2} onClick={undo} title="Undo" disabled={!canEdit} />
+          <ActionBtn icon={Redo2} onClick={redo} title="Redo" disabled={!canEdit} />
         </div>
 
         {/* Expand toggle */}
@@ -214,7 +229,7 @@ function MobileToolbar({ users }) {
 }
 
 // ─── Desktop sidebar ───────────────────────────────────────────────────────────
-function DesktopToolbar() {
+function DesktopToolbar({ canEdit }) {
   const { tool, setTool, undo, redo, clearCanvas, zoom, zoomIn, zoomOut, setZoom, setPanOffset } = useCanvasStore();
 
   const handleExport = () => {
@@ -245,7 +260,11 @@ function DesktopToolbar() {
           key={t.id}
           t={t}
           active={tool === t.id}
-          onClick={() => setTool(t.id)}
+          disabled={!canEdit && t.id !== 'cursor'}
+          onClick={() => {
+            if (!canEdit && t.id !== 'cursor') return;
+            setTool(t.id);
+          }}
         />
       ))}
     </div>
@@ -264,16 +283,18 @@ function DesktopToolbar() {
 
     {/* ⚡ Actions */}
     <div className="flex gap-1 px-2 border-l border-[#F3F4F6]">
-      <ActionBtn icon={Undo2} onClick={undo} title="Undo" />
-      <ActionBtn icon={Redo2} onClick={redo} title="Redo" />
+      <ActionBtn icon={Undo2} onClick={undo} title="Undo" disabled={!canEdit} />
+      <ActionBtn icon={Redo2} onClick={redo} title="Redo" disabled={!canEdit} />
       <ActionBtn icon={Download} onClick={handleExport} title="Export PNG" />
-      <ActionBtn icon={Trash2} onClick={clearCanvas} title="Clear Canvas" danger />
+      <ActionBtn icon={Trash2} onClick={clearCanvas} title="Clear Canvas" danger disabled={!canEdit} />
     </div>
 
-     <div className="pt-3 flex items-center gap-4">
-    <ColorPicker compact />
-    <StrokeWidth compact />
-  </div>
+    {canEdit && (
+      <div className="pt-3 flex items-center gap-4">
+        <ColorPicker compact />
+        <StrokeWidth compact />
+      </div>
+    )}
   </div>
 
  
@@ -281,11 +302,11 @@ function DesktopToolbar() {
   );
 }
 
-export default function Toolbar({ users = [] }) {
+export default function Toolbar({ users = [], canEdit = true }) {
   return (
     <>
-      <DesktopToolbar />
-      <MobileToolbar users={users} />
+      <DesktopToolbar canEdit={canEdit} />
+      <MobileToolbar users={users} canEdit={canEdit} />
     </>
   );
 }

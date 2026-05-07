@@ -98,6 +98,7 @@ const drawText = (ctx, textItem) => {
 const ERASER_RADIUS = 20;
 
 export default function Canvas({
+  canEdit = true,
   onCursorMove = () => {},
   onDrawStart = () => {},
   onDrawMove = () => {},
@@ -303,35 +304,40 @@ export default function Canvas({
     const { x: wx, y: wy } = screenToWorld(sx, sy);
 
     if (tool === 'text') {
+      if (!canEdit) return;
       setDraftText({ x: wx, y: wy, value: '' });
       requestAnimationFrame(() => textInputRef.current?.focus());
       return;
     }
 
     if (tool === 'cursor') {
-      const hitText = findTextAtPoint(wx, wy);
-      if (hitText) {
-        setIsDraggingText(true);
-        setDragTextState({ id: hitText.id, offsetX: wx - hitText.position.x, offsetY: wy - hitText.position.y });
-        return;
-      }
-      const hitShape = findShapeAtPoint(wx, wy);
-      if (hitShape) {
-        setIsDraggingShape(true);
-        setDragShapeState({
-          id: hitShape.id,
-          offsetX: wx - hitShape.startX,
-          offsetY: wy - hitShape.startY,
-          w: hitShape.endX - hitShape.startX,
-          h: hitShape.endY - hitShape.startY,
-        });
-        return;
+      if (canEdit) {
+        const hitText = findTextAtPoint(wx, wy);
+        if (hitText) {
+          setIsDraggingText(true);
+          setDragTextState({ id: hitText.id, offsetX: wx - hitText.position.x, offsetY: wy - hitText.position.y });
+          return;
+        }
+        const hitShape = findShapeAtPoint(wx, wy);
+        if (hitShape) {
+          setIsDraggingShape(true);
+          setDragShapeState({
+            id: hitShape.id,
+            offsetX: wx - hitShape.startX,
+            offsetY: wy - hitShape.startY,
+            w: hitShape.endX - hitShape.startX,
+            h: hitShape.endY - hitShape.startY,
+          });
+          return;
+        }
       }
       // Pan
       panDragRef.current = { startSx: sx, startSy: sy, startPanX: panOffset.x, startPanY: panOffset.y };
       setIsPointerDown(true);
       return;
     }
+
+    if (!canEdit) return;
 
     setIsPointerDown(true);
 
@@ -366,7 +372,7 @@ export default function Canvas({
         width: strokeWidth,
       });
     }
-  }, [tool, color, strokeWidth, screenToWorld, panOffset, findTextAtPoint, findShapeAtPoint, eraseAtPoint, beginStroke, beginShape, onDrawStart]);
+  }, [tool, canEdit, color, strokeWidth, screenToWorld, panOffset, findTextAtPoint, findShapeAtPoint, eraseAtPoint, beginStroke, beginShape, onDrawStart]);
 
   // ─── Pointer move ──────────────────────────────────────────────────────────
   const handlePointerMove = useCallback((e) => {
@@ -377,7 +383,7 @@ export default function Canvas({
 
     onCursorMove({ x: sx, y: sy });
 
-    if (isDraggingText && dragTextState) {
+    if (isDraggingText && dragTextState && canEdit) {
       const nextPosition = { x: wx - dragTextState.offsetX, y: wy - dragTextState.offsetY };
       updateTextPosition(dragTextState.id, nextPosition);
       onElementMove({
@@ -388,7 +394,7 @@ export default function Canvas({
       return;
     }
 
-    if (isDraggingShape && dragShapeState) {
+    if (isDraggingShape && dragShapeState && canEdit) {
       const newStartX = wx - dragShapeState.offsetX;
       const newStartY = wy - dragShapeState.offsetY;
       const nextCoords = {
@@ -413,6 +419,8 @@ export default function Canvas({
       setPanOffset({ x: startPanX + (sx - startSx), y: startPanY + (sy - startSy) });
       return;
     }
+
+    if (!canEdit) return;
 
     if (tool === 'eraser') {
       eraseAtPoint(wx, wy);
@@ -440,6 +448,7 @@ export default function Canvas({
     updateTextPosition, updateShapePosition,
     eraseAtPoint, updateActiveStroke, updateActiveShape,
     setPanOffset, onCursorMove, onDrawMove, onElementMove,
+    canEdit,
   ]);
 
   // ─── Pointer up ────────────────────────────────────────────────────────────
@@ -450,6 +459,11 @@ export default function Canvas({
     if (!isPointerDown) return;
     setIsPointerDown(false);
     panDragRef.current = null;
+
+    if (!canEdit) {
+      cancelActive();
+      return;
+    }
 
     if (tool === 'pen' && activeStroke) {
       const corrected = detectShapeFromStroke(activeStroke.points);
@@ -499,7 +513,7 @@ export default function Canvas({
       commitShape();
     }
     else cancelActive();
-  }, [isPointerDown, isDraggingText, isDraggingShape, tool, activeStroke, activeShape, onDrawEnd, commitStroke, commitShape, cancelActive, clearActiveStroke]);
+  }, [isPointerDown, isDraggingText, isDraggingShape, tool, activeStroke, activeShape, onDrawEnd, commitStroke, commitShape, cancelActive, clearActiveStroke, canEdit]);
 
   // ─── Pinch-zoom (two fingers) ──────────────────────────────────────────────
   const handleTouchStart = useCallback((e) => {
@@ -585,6 +599,11 @@ export default function Canvas({
   // ─── Text commit ────────────────────────────────────────────────────────────
   const commitDraftText = () => {
   if (!draftText) return;
+
+  if (!canEdit) {
+    setDraftText(null);
+    return;
+  }
 
   const value = draftText.value.trim();
   if (value) {

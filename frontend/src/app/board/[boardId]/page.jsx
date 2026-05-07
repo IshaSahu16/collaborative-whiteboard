@@ -24,7 +24,7 @@ export default function BoardPage() {
 	const boardId = params?.boardId;
 
 	const { user } = useAuthStore();
-	const { audioNotes, addAudioNote, deleteAudioNote, initializeBoard } = useCanvasStore();
+	const { audioNotes, addAudioNote, deleteAudioNote, initializeBoard, setTool } = useCanvasStore();
 	const {
 		cursors,
 		users,
@@ -37,6 +37,7 @@ export default function BoardPage() {
 	} = useSocket({ boardId, user });
 
 	const [boardTitle, setBoardTitle] = useState('Untitled Board');
+	const [boardData, setBoardData] = useState(null);
 	const [isLoadingBoard, setIsLoadingBoard] = useState(true);
 	const [isExportOpen, setIsExportOpen] = useState(false);
 	const [isAudioOpen, setIsAudioOpen] = useState(false);
@@ -52,9 +53,11 @@ export default function BoardPage() {
 			setIsLoadingBoard(true);
 			try {
 				const res = await getBoardById(boardId);
+				setBoardData(res?.data || null);
 				setBoardTitle(res?.data?.title || 'Untitled Board');
 			} catch (error) {
 				console.error('Failed to load board:', error);
+				setBoardData(null);
 				setBoardTitle('Untitled Board');
 			} finally {
 				setIsLoadingBoard(false);
@@ -68,6 +71,33 @@ export default function BoardPage() {
 		if (!boardId) return;
 		initializeBoard(boardId);
 	}, [boardId, initializeBoard]);
+
+	const role = useMemo(() => {
+		if (!boardData || !user) return 'viewer';
+
+		const userId = String(user._id || user.id || '');
+		if (!userId) return 'viewer';
+
+		const ownerId = typeof boardData.owner === 'object' ? boardData.owner?._id : boardData.owner;
+		if (ownerId && String(ownerId) === userId) return 'owner';
+
+		const member = Array.isArray(boardData.members)
+			? boardData.members.find((m) => {
+					const memberUserId = typeof m.user === 'object' ? m.user?._id : m.user;
+					return memberUserId && String(memberUserId) === userId;
+			  })
+			: null;
+
+		return member?.role || 'viewer';
+	}, [boardData, user]);
+
+	const canEdit = role === 'owner' || role === 'editor';
+
+	useEffect(() => {
+		if (!canEdit) {
+			setTool('cursor');
+		}
+	}, [canEdit, setTool]);
 
 	const activeUsers = useMemo(() => {
 		if (!user) return [];
@@ -102,7 +132,9 @@ export default function BoardPage() {
 						<h1 className="text-sm font-semibold text-[#111827]">
 							{isLoadingBoard ? 'Loading board...' : boardTitle}
 						</h1>
-						<p className="text-xs text-[#6B7280]">Board ID: {boardId}</p>
+						<p className="text-xs text-[#6B7280]">
+							Board ID: {boardId} · Role: {role}
+						</p>
 					</div>
 				</div>
 
@@ -120,6 +152,7 @@ export default function BoardPage() {
 
 			<div className="relative flex-1 overflow-hidden pb-28 md:pb-0">
 				<Canvas
+					canEdit={canEdit}
 					onCursorMove={sendCursorMove}
 					onDrawStart={sendDrawStart}
 					onDrawMove={sendDrawMove}
@@ -135,7 +168,7 @@ export default function BoardPage() {
 				<Headphones className="h-4 w-4 text-[#4F46E5]" />
 				Audio
 			</button>
-			<Toolbar users={users.length ? users : activeUsers} />
+			<Toolbar users={users.length ? users : activeUsers} canEdit={canEdit} />
 			<PagePanel />
 			<ActiveUsers users={users.length ? users : activeUsers} className="max-md:hidden" />
 			<LiveCursors cursors={cursors} />
