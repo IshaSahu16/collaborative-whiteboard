@@ -6,7 +6,7 @@ const initSocket = (server) => {
 
   const allowedOrigins = [
   'http://localhost:3000',
-  'https://collaborative-whiteboard-coral.vercel.app/',
+  'https://collaborative-whiteboard-coral.vercel.app',
   process.env.CLIENT_URL,
   ].filter(Boolean);
 

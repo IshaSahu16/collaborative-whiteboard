@@ -32,7 +32,7 @@ const allowedOrigins = [
   'http://localhost:3000',                              // Local dev
   'http://localhost:3001',                              // Backup local port
   process.env.CLIENT_URL,                               // Vercel production URL
-  'https://collaborative-whiteboard-coral.vercel.app/',                   // Replace with your actual Vercel URL
+  'https://collaborative-whiteboard-coral.vercel.app',                   // Replace with your actual Vercel URL
 ].filter(Boolean);  // Remove undefined values
 
 const corsOptions = {
@@ -55,13 +55,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// ─────────────────────────────────────────────────────────────────────
-// ✅ Explicit preflight handler (optional but safe)
-// ─────────────────────────────────────────────────────────────────────
-app.options('*', cors(corsOptions));
-
-// ─────────────────────────────────────────────────────────────────────
-// ✅ HELMET — secure HTTP headers (with cross-origin fixes for Socket.IO)
 // ─────────────────────────────────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },  // Allow cross-origin resources
