@@ -30,27 +30,41 @@ export default function BoardsPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [shareTarget, setShareTarget] = useState(null);
   const [inviteTarget, setInviteTarget] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Fetch logged-in user
   useEffect(() => {
-    fetchUser();
-  }, []);
+    let isMounted = true;
+
+    const initAuth = async () => {
+      await fetchUser();
+      if (isMounted) {
+        setAuthChecked(true);
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchUser]);
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (authChecked && !isLoading && !user) {
       router.push("/login");
     }
-  }, [isLoading, user, router]);
+  }, [authChecked, isLoading, user, router]);
 
   // Fetch boards after auth confirmed
   useEffect(() => {
-    if (user) {
+    if (authChecked && user) {
       fetchBoards();
     }
-  }, [user]);
+  }, [authChecked, user, fetchBoards]);
 
-  if (isLoading || !user) {
+  if (!authChecked || isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         Loading...
