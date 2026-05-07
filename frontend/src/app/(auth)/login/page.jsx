@@ -42,7 +42,7 @@ export default function Login() {
     // Check for pending invite first
     const pendingInvite = localStorage.getItem('pendingInvite');
     if (pendingInvite) {
-      router.push(`/invite/${pendingInvite}`);
+      window.location.href = `/invite/${pendingInvite}`;
       return;
     }
 
@@ -50,12 +50,12 @@ export default function Login() {
     const params = new URLSearchParams(window.location.search);
     const redirect = params.get('redirect');
     if (redirect) {
-      router.push(redirect);
+      window.location.href = redirect;
       return;
     }
 
     // Default redirect
-    router.push('/boards');
+    window.location.href = '/boards';
   } else {
     setError(result.message || 'Login failed');
   }
