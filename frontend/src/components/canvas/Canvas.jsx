@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { flushSync } from 'react-dom';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { MousePointer2, Pen, Eraser, Type, Square, Circle, Minus } from 'lucide-react';
 import useCanvasStore from '@/store/canvasStore';
@@ -299,19 +298,31 @@ export default function Canvas({
   // ─── Pointer down ──────────────────────────────────────────────────────────
   const handlePointerDown = useCallback((e) => {
     // Ignore multi-touch (handled by pinch)
+    // if (e.touches && e.touches.length === 2) return;
+
+    // const { sx, sy } = getEventCoords(e);
+    // const { x: wx, y: wy } = screenToWorld(sx, sy);
+
+    // if (tool === 'text') {
+    //   if (!canEdit) return;
+    //   setDraftText({ x: wx, y: wy, value: '' });
+    //   return;
+    // }
     if (e.touches && e.touches.length === 2) return;
 
-    const { sx, sy } = getEventCoords(e);
-    const { x: wx, y: wy } = screenToWorld(sx, sy);
+  // Prevent default for touch to avoid scroll interference
+  if (e.touches) e.preventDefault();
 
-    if (tool === 'text') {
-      if (!canEdit) return;
-      flushSync(() => {
-        setDraftText({ x: wx, y: wy, value: '' });
-      });
-      textInputRef.current?.focus({ preventScroll: true });
-      return;
-    }
+  const { sx, sy } = getEventCoords(e);
+  const { x: wx, y: wy } = screenToWorld(sx, sy);
+
+  if (tool === 'text') {
+    if (!canEdit) return;
+    // Stop propagation so touch doesn't trigger pan
+    e.stopPropagation();
+    setDraftText({ x: wx, y: wy, value: '' });
+    return;
+  }
 
     if (tool === 'cursor') {
       if (canEdit) {
@@ -519,22 +530,45 @@ export default function Canvas({
   }, [isPointerDown, isDraggingText, isDraggingShape, tool, activeStroke, activeShape, onDrawEnd, commitStroke, commitShape, cancelActive, clearActiveStroke, canEdit]);
 
   // ─── Pinch-zoom (two fingers) ──────────────────────────────────────────────
+  // const handleTouchStart = useCallback((e) => {
+  //   if (e.touches.length === 2) {
+  //     e.preventDefault();
+  //     const t1 = e.touches[0];
+  //     const t2 = e.touches[1];
+  //     const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+  //     const midX = (t1.clientX + t2.clientX) / 2;
+  //     const midY = (t1.clientY + t2.clientY) / 2;
+  //     pinchRef.current = { dist, midX, midY, startZoom: zoom, startPan: { ...panOffset } };
+  //     // cancel any active drawing
+  //     cancelActive();
+  //     setIsPointerDown(false);
+  //   } else {
+  //     handlePointerDown(e);
+  //   }
+  // }, [zoom, panOffset, cancelActive, handlePointerDown]);
   const handleTouchStart = useCallback((e) => {
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      const t1 = e.touches[0];
-      const t2 = e.touches[1];
-      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-      const midX = (t1.clientX + t2.clientX) / 2;
-      const midY = (t1.clientY + t2.clientY) / 2;
-      pinchRef.current = { dist, midX, midY, startZoom: zoom, startPan: { ...panOffset } };
-      // cancel any active drawing
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    const t1 = e.touches[0];
+    const t2 = e.touches[1];
+    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    const midX = (t1.clientX + t2.clientX) / 2;
+    const midY = (t1.clientY + t2.clientY) / 2;
+    pinchRef.current = { 
+      dist, midX, midY, 
+      startZoom: zoom, 
+      startPan: { ...panOffset } 
+    };
+    // Only cancel active if NOT text tool
+    if (tool !== 'text') {
       cancelActive();
       setIsPointerDown(false);
-    } else {
-      handlePointerDown(e);
     }
-  }, [zoom, panOffset, cancelActive, handlePointerDown]);
+  } else if (e.touches.length === 1) {
+    // Single finger — handle normally including text tool
+    handlePointerDown(e);
+  }
+}, [zoom, panOffset, tool, cancelActive, handlePointerDown]);
 
   const handleTouchMove = useCallback((e) => {
     if (e.touches.length === 2 && pinchRef.current) {
@@ -600,7 +634,23 @@ export default function Canvas({
   }, [handleWheel]);
 
   // ─── Text commit ────────────────────────────────────────────────────────────
-  const commitDraftText = () => {
+//   const commitDraftText = () => {
+//   if (!draftText) return;
+
+//   if (!canEdit) {
+//     setDraftText(null);
+//     return;
+//   }
+
+//   const value = draftText.value.trim();
+//   if (value) {
+//     const fontSize = Math.max(14, 16 * zoom); // ✅ fix
+//     addText(value, { x: draftText.x, y: draftText.y }, color, fontSize);
+//   }
+
+//   setDraftText(null);
+// };
+const commitDraftText = useCallback(() => {
   if (!draftText) return;
 
   if (!canEdit) {
@@ -610,17 +660,54 @@ export default function Canvas({
 
   const value = draftText.value.trim();
   if (value) {
-    const fontSize = Math.max(14, 16 * zoom); // ✅ fix
+    const fontSize = Math.max(14, 16 * zoom);
     addText(value, { x: draftText.x, y: draftText.y }, color, fontSize);
   }
 
   setDraftText(null);
-};
+}, [draftText, canEdit, zoom, color, addText]);
 
-  const handleDraftKeyDown = (e) => {
-    if (e.key === 'Escape') { e.preventDefault(); setDraftText(null); return; }
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitDraftText(); }
-  };
+const handleDraftKeyDown = useCallback((e) => {
+  if (e.key === 'Escape') { 
+    e.preventDefault(); 
+    setDraftText(null); 
+    return; 
+  }
+  if (e.key === 'Enter' && !e.shiftKey) { 
+    e.preventDefault(); 
+    commitDraftText(); 
+  }
+}, [commitDraftText]);
+
+useLayoutEffect(() => {
+  if (!draftText) return;
+
+  // Small timeout ensures textarea is rendered before focusing
+  const timer = setTimeout(() => {
+    const input = textInputRef.current;
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    // Place cursor at end
+    input.selectionStart = input.value.length;
+    input.selectionEnd = input.value.length;
+  }, 10);
+
+  return () => clearTimeout(timer);
+}, [draftText]);
+
+  // const handleDraftKeyDown = (e) => {
+  //   if (e.key === 'Escape') { e.preventDefault(); setDraftText(null); return; }
+  //   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitDraftText(); }
+  // };
+
+  // useLayoutEffect(() => {
+  //   if (!draftText) return;
+
+  //   const input = textInputRef.current;
+  //   if (!input) return;
+
+  //   input.focus({ preventScroll: true });
+  // }, [draftText]);
 
   // ─── Resize observer ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -684,7 +771,7 @@ export default function Canvas({
       />
 
       {/* Inline text input — positioned in screen space */}
-      {draftText && draftScreenPos && (
+      {/* {draftText && draftScreenPos && (
   <textarea
     ref={textInputRef}
     value={draftText.value}
@@ -697,8 +784,38 @@ export default function Canvas({
     onKeyDown={handleDraftKeyDown}
     onPointerDown={(e) => e.stopPropagation()}
     onTouchStart={(e) => e.stopPropagation()}
+    autoFocus
     placeholder="Type here… (Enter to confirm, Esc to cancel)"
     className="absolute z-20 min-w-37.5 max-w-75 resize-none rounded-lg border-2 border-[#4F46E5] bg-white/95 px-3 py-2 text-base text-[#111827] shadow-xl outline-none ring-2 ring-[#4F46E5]/20 touch-auto select-text caret-[#111827]"
+    style={{
+      left: `${draftScreenPos.left}px`,
+      top: `${draftScreenPos.top}px`,
+      fontSize: `${Math.max(14, 16 * zoom)}px`,
+    }}
+    rows={3}
+  />
+)} */}
+{draftText && draftScreenPos && (
+  <textarea
+    ref={textInputRef}
+    value={draftText.value}
+    onChange={(e) =>
+      setDraftText((curr) =>
+        curr ? { ...curr, value: e.target.value } : curr
+      )
+    }
+    onBlur={commitDraftText}
+    onKeyDown={handleDraftKeyDown}
+    onPointerDown={(e) => e.stopPropagation()}
+    onTouchStart={(e) => {
+      e.stopPropagation(); // ← prevent canvas touch handler
+    }}
+    onTouchEnd={(e) => {
+      e.stopPropagation(); // ← prevent canvas touch handler
+    }}
+    autoFocus
+    placeholder="Type here… (Enter to confirm, Esc to cancel)"
+    className="absolute z-20 min-w-[200px] max-w-[400px] resize-none rounded-lg border-2 border-[#4F46E5] bg-white/95 px-3 py-2 text-base text-[#111827] shadow-xl outline-none ring-2 ring-[#4F46E5]/20 touch-auto select-text caret-[#111827]"
     style={{
       left: `${draftScreenPos.left}px`,
       top: `${draftScreenPos.top}px`,
