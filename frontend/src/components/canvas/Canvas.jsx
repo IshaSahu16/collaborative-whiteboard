@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { motion } from 'framer-motion';
 import { MousePointer2, Pen, Eraser, Type, Square, Circle, Minus } from 'lucide-react';
 import useCanvasStore from '@/store/canvasStore';
@@ -305,8 +306,10 @@ export default function Canvas({
 
     if (tool === 'text') {
       if (!canEdit) return;
-      setDraftText({ x: wx, y: wy, value: '' });
-      requestAnimationFrame(() => textInputRef.current?.focus());
+      flushSync(() => {
+        setDraftText({ x: wx, y: wy, value: '' });
+      });
+      textInputRef.current?.focus({ preventScroll: true });
       return;
     }
 
@@ -692,8 +695,10 @@ export default function Canvas({
     }
     onBlur={commitDraftText}
     onKeyDown={handleDraftKeyDown}
+    onPointerDown={(e) => e.stopPropagation()}
+    onTouchStart={(e) => e.stopPropagation()}
     placeholder="Type here… (Enter to confirm, Esc to cancel)"
-    className="absolute z-20 min-w-37.5 max-w-75 resize-none rounded-lg border-2 border-[#4F46E5] bg-white/95 px-3 py-2 text-base text-[#111827] shadow-xl outline-none ring-2 ring-[#4F46E5]/20"
+    className="absolute z-20 min-w-37.5 max-w-75 resize-none rounded-lg border-2 border-[#4F46E5] bg-white/95 px-3 py-2 text-base text-[#111827] shadow-xl outline-none ring-2 ring-[#4F46E5]/20 touch-auto select-text caret-[#111827]"
     style={{
       left: `${draftScreenPos.left}px`,
       top: `${draftScreenPos.top}px`,
