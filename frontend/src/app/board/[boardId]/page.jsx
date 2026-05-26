@@ -14,6 +14,7 @@ import ExportOptions from '@/components/canvas/ExportOptions';
 import AudioNote from '@/components/canvas/AudioNote';
 import AudioNotePin from '@/components/canvas/AudioNotePin';
 import AudioNotesList from '@/components/canvas/AudioNotesList';
+import AudioNotesPanel from '@/components/canvas/AudioNotesPanel';
 import useSocket from '@/hooks/useSocket';
 import useAuthStore from '@/store/authStore';
 import useCanvasStore from '@/store/canvasStore';
@@ -179,9 +180,14 @@ export default function BoardPage() {
 					audioUrl={note.url}
 					position={note.position}
 					onDelete={() => deleteAudioNote(note.id)}
-					className="max-md:hidden"
+					className="md:hidden"
 				/>
 			))}
+
+			<AudioNotesPanel
+				notes={audioNotes}
+				onDelete={deleteAudioNote}
+			/>
 
 			<ExportOptions isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
 			<AudioNote

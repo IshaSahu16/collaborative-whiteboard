@@ -39,7 +39,7 @@ export default function ColorPicker() {
 
       {isOpen && (
         <motion.div
-          className="absolute bottom-12 left-0 bg-white rounded-lg shadow-lg border border-[#E5E7EB] p-3 space-y-3 z-50"
+          className="absolute top-12 left-0 bg-white rounded-lg shadow-lg border border-[#E5E7EB] p-3 space-y-3 z-50"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}

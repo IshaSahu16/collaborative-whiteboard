@@ -73,6 +73,53 @@ const isRectLike = (points, bounds) => {
 	});
 };
 
+const getCornerPoints = (points, diag) => {
+	const closeThreshold = Math.max(6, diag * 0.03);
+	const angleThreshold = 135;
+	const minCornerGap = Math.max(10, diag * 0.1);
+
+	const first = points[0];
+	const last = points[points.length - 1];
+	const closedPoints = distance(first, last) < closeThreshold
+		? points.slice(0, -1)
+		: points;
+
+	const step = Math.max(1, Math.floor(closedPoints.length / 40));
+	const sampled = closedPoints.filter((_, i) => i % step === 0);
+	if (sampled.length < 4) return [];
+
+	const corners = [];
+	const len = sampled.length;
+	for (let i = 0; i < len; i += 1) {
+		const prev = sampled[(i - 1 + len) % len];
+		const curr = sampled[i];
+		const next = sampled[(i + 1) % len];
+
+		const v1x = prev.x - curr.x;
+		const v1y = prev.y - curr.y;
+		const v2x = next.x - curr.x;
+		const v2y = next.y - curr.y;
+		const dot = v1x * v2x + v1y * v2y;
+		const mag1 = Math.hypot(v1x, v1y) || 1;
+		const mag2 = Math.hypot(v2x, v2y) || 1;
+		const cos = dot / (mag1 * mag2);
+		const angle = Math.acos(Math.max(-1, Math.min(1, cos))) * (180 / Math.PI);
+
+		if (angle < angleThreshold) {
+			const lastCorner = corners[corners.length - 1];
+			if (!lastCorner || distance(lastCorner, curr) >= minCornerGap) {
+				corners.push(curr);
+			}
+		}
+	}
+
+	if (corners.length > 1 && distance(corners[0], corners[corners.length - 1]) < minCornerGap) {
+		corners.pop();
+	}
+
+	return corners;
+};
+
 export const detectShapeFromStroke = (points) => {
 	if (!points || points.length < 8) return null;
 
@@ -112,6 +159,19 @@ export const detectShapeFromStroke = (points) => {
 			endX: bounds.maxX,
 			endY: bounds.maxY,
 		};
+	}
+
+	if (closed) {
+		const corners = getCornerPoints(points, diag);
+		if (corners.length === 3) {
+			return {
+				type: 'triangle',
+				startX: bounds.minX,
+				startY: bounds.minY,
+				endX: bounds.maxX,
+				endY: bounds.maxY,
+			};
+		}
 	}
 
 	return null;

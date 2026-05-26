@@ -6,7 +6,7 @@ const canvasElementSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   type: {
     type: String,
-    enum: ['rectangle', 'circle', 'line', 'pencil', 'text', 'arrow', 'image'],
+    enum: ['rectangle', 'circle', 'line', 'triangle', 'pentagon', 'hexagon', 'pencil', 'text', 'arrow', 'image'],
     required: true,
   },
   data: { type: mongoose.Schema.Types.Mixed, required: true },

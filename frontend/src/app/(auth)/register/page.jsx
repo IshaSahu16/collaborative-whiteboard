@@ -90,7 +90,7 @@ export default function Register() {
             <div className="w-10 h-10 bg-white/20 rounded-lg backdrop-blur-sm flex items-center justify-center">
               <div className="w-6 h-6 bg-white rounded-sm" />
             </div>
-            <span className="text-white font-bold text-xl">BoardFlow</span>
+            <span className="text-white font-bold text-xl">CollabCanvas</span>
           </div>
 
           <motion.div variants={container} initial="hidden" animate="show">

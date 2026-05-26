@@ -43,6 +43,20 @@ const drawShape = (ctx, shape, roughCanvas) => {
   const h = endY - startY;
   const useRough = shape.rough && roughCanvas;
 
+  const getPolygonPoints = (sides) => {
+    const cx = startX + w / 2;
+    const cy = startY + h / 2;
+    const rx = Math.abs(w) / 2;
+    const ry = Math.abs(h) / 2;
+    const rotation = -Math.PI / 2;
+    const points = [];
+    for (let i = 0; i < sides; i += 1) {
+      const angle = rotation + (i * 2 * Math.PI) / sides;
+      points.push([cx + rx * Math.cos(angle), cy + ry * Math.sin(angle)]);
+    }
+    return points;
+  };
+
   if (useRough) {
     const roughness = 1.1;
     const options = {
@@ -57,6 +71,9 @@ const drawShape = (ctx, shape, roughCanvas) => {
       roughCanvas.ellipse(startX + w / 2, startY + h / 2, Math.abs(w), Math.abs(h), options);
     } else if (shape.type === 'line') {
       roughCanvas.line(startX, startY, endX, endY, options);
+    } else if (['triangle', 'pentagon', 'hexagon'].includes(shape.type)) {
+      const sides = shape.type === 'triangle' ? 3 : shape.type === 'pentagon' ? 5 : 6;
+      roughCanvas.polygon(getPolygonPoints(sides), options);
     }
   } else {
     ctx.strokeStyle = shape.color;
@@ -75,6 +92,16 @@ const drawShape = (ctx, shape, roughCanvas) => {
       ctx.beginPath();
       ctx.moveTo(startX, startY);
       ctx.lineTo(endX, endY);
+      ctx.stroke();
+    } else if (['triangle', 'pentagon', 'hexagon'].includes(shape.type)) {
+      const sides = shape.type === 'triangle' ? 3 : shape.type === 'pentagon' ? 5 : 6;
+      const points = getPolygonPoints(sides);
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (let i = 1; i < points.length; i += 1) {
+        ctx.lineTo(points[i][0], points[i][1]);
+      }
+      ctx.closePath();
       ctx.stroke();
     }
   }

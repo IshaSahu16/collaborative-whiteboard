@@ -30,7 +30,7 @@ const mapElementsToState = (elements) => {
       return;
     }
 
-    if (['rectangle', 'circle', 'line'].includes(el.type)) {
+    if (['rectangle', 'circle', 'line', 'triangle', 'pentagon', 'hexagon'].includes(el.type)) {
       shapes.push({
         id: el._id,
         backendId: el._id,

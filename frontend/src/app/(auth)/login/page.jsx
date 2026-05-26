@@ -89,7 +89,7 @@ export default function Login() {
             <div className="w-10 h-10 bg-white/20 rounded-lg backdrop-blur-sm flex items-center justify-center">
               <div className="w-6 h-6 bg-white rounded-sm" />
             </div>
-            <span className="text-white font-bold text-xl">BoardFlow</span>
+            <span className="text-white font-bold text-xl">CollabCanvas</span>
           </div>
 
           <motion.div variants={container} initial="hidden" animate="show">
@@ -154,12 +154,12 @@ export default function Login() {
               <motion.div variants={item}>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-foreground">Password</label>
-                  <Link
+                  {/* <Link
                     href="/forgot-password"
                     className="text-sm text-primary hover:text-primary/80 transition-colors"
                   >
                     Forgot?
-                  </Link>
+                  </Link> */}
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
