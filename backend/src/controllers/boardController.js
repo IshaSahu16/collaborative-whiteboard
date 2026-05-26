@@ -16,7 +16,10 @@ export const createBoard = async (req, res) => {
       shareLink: uuidv4(),
     });
     await Page.create({ board: board._id, pageNumber: 1, title: 'Page 1' });
-    successResponse(res, 201, 'Board created', board);
+    const populatedBoard = await Board.findById(board._id)
+      .populate('owner', 'name email avatar')
+      .populate('members.user', 'name email avatar');
+    successResponse(res, 201, 'Board created', populatedBoard);
   } catch (err) {
     errorResponse(res, 500, err.message);
   }

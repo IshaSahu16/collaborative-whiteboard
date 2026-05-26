@@ -744,7 +744,7 @@ useLayoutEffect(() => {
     : null;
 
   return (
-    <div ref={containerRef} className="absolute inset-0 overflow-hidden touch-none select-none">
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
       {/* Tool indicator */}
       <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2 rounded-full border border-[#E5E7EB] bg-white/95 px-3 py-1.5 shadow-md backdrop-blur-sm">
         <div className="flex items-center gap-1.5 text-xs font-medium text-[#111827]">
@@ -759,7 +759,7 @@ useLayoutEffect(() => {
 
       <canvas
         ref={canvasRef}
-        className={`absolute inset-0 ${cursorStyle}`}
+        className={`absolute inset-0 touch-none select-none ${cursorStyle}`}
         style={{ width: canvasSize.width, height: canvasSize.height }}
         onMouseDown={handlePointerDown}
         onMouseMove={handlePointerMove}
@@ -815,7 +815,7 @@ useLayoutEffect(() => {
     }}
     autoFocus
     placeholder="Type here… (Enter to confirm, Esc to cancel)"
-    className="absolute z-20 min-w-[200px] max-w-[400px] resize-none rounded-lg border-2 border-[#4F46E5] bg-white/95 px-3 py-2 text-base text-[#111827] shadow-xl outline-none ring-2 ring-[#4F46E5]/20 touch-auto select-text caret-[#111827]"
+    className="absolute z-20 min-w-[200px] max-w-[400px] resize-none rounded-lg border-2 border-[#4F46E5] bg-white/95 px-3 py-2 text-base text-[#111827] shadow-xl outline-none ring-2 ring-[#4F46E5]/20 touch-auto select-text pointer-events-auto caret-[#111827]"
     style={{
       left: `${draftScreenPos.left}px`,
       top: `${draftScreenPos.top}px`,
