@@ -310,14 +310,18 @@ export default function Canvas({
     // }
     if (e.touches && e.touches.length === 2) return;
 
+  const isTouchEvent = Boolean(e.touches && e.touches.length);
+
   // Prevent default for touch to avoid scroll interference
-  if (e.touches) e.preventDefault();
+  if (isTouchEvent) e.preventDefault();
 
   const { sx, sy } = getEventCoords(e);
   const { x: wx, y: wy } = screenToWorld(sx, sy);
 
   if (tool === 'text') {
     if (!canEdit) return;
+    // For touch, create the draft here. Desktop uses click handler.
+    if (!isTouchEvent) return;
     // Stop propagation so touch doesn't trigger pan
     e.stopPropagation();
     setDraftText({ x: wx, y: wy, value: '' });
@@ -387,6 +391,14 @@ export default function Canvas({
       });
     }
   }, [tool, canEdit, color, strokeWidth, screenToWorld, panOffset, findTextAtPoint, findShapeAtPoint, eraseAtPoint, beginStroke, beginShape, onDrawStart]);
+
+  const handleCanvasClick = useCallback((e) => {
+    if (tool !== 'text' || !canEdit || draftText) return;
+    if (e.target !== canvasRef.current) return;
+    const { sx, sy } = getEventCoords(e);
+    const { x: wx, y: wy } = screenToWorld(sx, sy);
+    setDraftText({ x: wx, y: wy, value: '' });
+  }, [tool, canEdit, draftText, screenToWorld]);
 
   // ─── Pointer move ──────────────────────────────────────────────────────────
   const handlePointerMove = useCallback((e) => {
@@ -765,6 +777,7 @@ useLayoutEffect(() => {
         onMouseMove={handlePointerMove}
         onMouseUp={handlePointerUp}
         onMouseLeave={handlePointerUp}
+        onClick={handleCanvasClick}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
