@@ -174,16 +174,6 @@ export default function BoardPage() {
 			<ActiveUsers users={users.length ? users : activeUsers} className="max-md:hidden" />
 			<LiveCursors cursors={cursors} />
 
-			{audioNotes.map((note) => (
-				<AudioNotePin
-					key={note.id}
-					audioUrl={note.url}
-					position={note.position}
-					onDelete={() => deleteAudioNote(note.id)}
-					className="md:hidden"
-				/>
-			))}
-
 			<AudioNotesPanel
 				notes={audioNotes}
 				onDelete={deleteAudioNote}
