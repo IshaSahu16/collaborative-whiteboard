@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -26,11 +26,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useAuthStore from "@/store/authStore";
+import useBoardStore from "@/store/boardStore";
 
 export default function Navbar() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const { searchQuery, setSearchQuery } = useBoardStore();
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const showSearch = pathname === '/boards';
 
   const handleLogout = async () => {
     await logout();
@@ -41,9 +45,9 @@ export default function Navbar() {
     router.push("/profile");
   };
 
-  const handleSettings = () => {
-    router.push("/profile"); // point to profile for now
-  };
+  // const handleSettings = () => {
+  //   router.push("/profile"); // point to profile for now
+  // };
 
   return (
     <motion.header
@@ -67,7 +71,7 @@ export default function Navbar() {
         </Link>
 
         {/* Search */}
-        <div className="hidden flex-1 max-w-md mx-8 md:block">
+        {/* <div className="hidden flex-1 max-w-md mx-8 md:block">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
             <Input
@@ -78,13 +82,35 @@ export default function Navbar() {
               className="w-full pl-10 bg-[#F4F6FB] border-transparent focus:bg-white focus:border-[#E5E7EB]"
             />
           </div>
-        </div>
+        </div> */}
+        {showSearch && (
+          <div className="hidden flex-1 max-w-md mx-8 md:block">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+              <Input
+                type="text"
+                placeholder="Search boards..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 bg-[#F4F6FB] border-transparent focus:bg-white focus:border-[#E5E7EB]"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center gap-2">
           
           {/* Notifications */}
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5 text-[#6B7280]" />
@@ -102,12 +128,12 @@ export default function Navbar() {
                 No new notifications
               </div>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
 
           {/* Help */}
-          <Button variant="ghost" size="icon" className="hidden sm:flex">
+          {/* <Button variant="ghost" size="icon" className="hidden sm:flex">
             <HelpCircle className="h-5 w-5 text-[#6B7280]" />
-          </Button>
+          </Button> */}
 
           {/* User Menu */}
           <DropdownMenu>
@@ -146,10 +172,10 @@ export default function Navbar() {
                 Profile
               </DropdownMenuItem>
               
-              <DropdownMenuItem onClick={handleSettings}>
+              {/* <DropdownMenuItem onClick={handleSettings}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               
               <DropdownMenuSeparator />
               

@@ -70,8 +70,11 @@ export const getBoardByShareLink = async (req, res) => {
   try {
     const board = await Board.findOne({ shareLink: req.params.shareLink })
       .populate('owner', 'name email')
-      .select('title description owner members shareLink');
+      .select('title description owner members shareLink isPublic');
     if (!board) return errorResponse(res, 404, 'Invalid invite link');
+    if (!board.isPublic) {
+      return errorResponse(res, 403, 'This board is private');
+    }
     successResponse(res, 200, 'Board found', {
       title: board.title,
       description: board.description,
@@ -93,6 +96,10 @@ export const joinBoardByShareLink = async (req, res) => {
     );
     if (alreadyMember) {
       return successResponse(res, 200, 'Already a member', { boardId: board._id });
+    }
+
+    if (!board.isPublic) {
+      return errorResponse(res, 403, 'This board is private');
     }
 
     board.members.push({ user: req.user._id, role: 'viewer' });

@@ -30,6 +30,7 @@ export default function ShareBoardModal({ isOpen, onClose, board }) {
 
   if (!board) return null;
 
+  const isPublicBoard = !!board.isPublic;
   // Use actual shareLink from backend
   const shareLink = board.shareLink
     ? getShareableLink(board.shareLink)
@@ -78,7 +79,9 @@ export default function ShareBoardModal({ isOpen, onClose, board }) {
         <DialogHeader>
           <DialogTitle className="text-[#111827]">{`Share "${board.title}"`}</DialogTitle>
           <DialogDescription className="text-[#6B7280]">
-            Anyone with this link joins as a Viewer
+            {isPublicBoard
+              ? "Anyone with this link joins as a Viewer"
+              : "This board is private. Share by email instead."}
           </DialogDescription>
         </DialogHeader>
 
@@ -92,12 +95,13 @@ export default function ShareBoardModal({ isOpen, onClose, board }) {
             <Label className="text-[#111827]">Share Link</Label>
             <div className="flex gap-2">
               <Input
-                value={shareLink}
+                value={isPublicBoard ? shareLink : "Private board"}
                 readOnly
                 className="text-sm bg-[#F3F4F6] border-[#E5E7EB] text-[#6B7280]"
               />
               <Button
                 onClick={handleCopyLink}
+                disabled={!isPublicBoard}
                 variant="outline"
                 className="px-3 border-[#E5E7EB] hover:bg-[#F3F4F6] shrink-0"
               >
@@ -129,15 +133,17 @@ export default function ShareBoardModal({ isOpen, onClose, board }) {
           </div>
 
           {/* Info Box */}
-          <div className="p-3 bg-[#EEF2FF] rounded-lg border border-[#E0E7FF]">
-            <div className="flex gap-2">
-              <Globe className="h-4 w-4 text-[#4F46E5] shrink-0 mt-0.5" />
-              <p className="text-sm text-[#4F46E5]">
-                Anyone with this link can join the board as a Viewer. 
-                The board owner can change their role anytime.
-              </p>
+          {isPublicBoard && (
+            <div className="p-3 bg-[#EEF2FF] rounded-lg border border-[#E0E7FF]">
+              <div className="flex gap-2">
+                <Globe className="h-4 w-4 text-[#4F46E5] shrink-0 mt-0.5" />
+                <p className="text-sm text-[#4F46E5]">
+                  Anyone with this link can join the board as a Viewer.
+                  The board owner can change their role anytime.
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Members List */}
           {members.length > 0 && (

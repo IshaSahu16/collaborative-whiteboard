@@ -11,6 +11,18 @@ const useBoardStore = create((set, get) => ({
   isLoading: false,
   error: null,
 
+  searchQuery: '',
+
+setSearchQuery: (query) => set({ searchQuery: query }),
+
+getFilteredBoards: () => {
+  const { boards, searchQuery } = get();
+  if (!searchQuery.trim()) return boards;
+  return boards.filter((b) =>
+    b.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+},
+
   // Fetch all boards from backend
   fetchBoards: async () => {
     set({ isLoading: true, error: null });
